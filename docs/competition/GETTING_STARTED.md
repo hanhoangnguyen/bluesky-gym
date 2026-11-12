@@ -15,16 +15,28 @@ git clone --branch AI4REAL-NET-Competition --single-branch https://github.com/TU
 cd bluesky-gym
 ```
 
-Requires Python ≥ 3.10. The project is managed with [uv](https://docs.astral.sh/uv/)
+Requires Python 3.10–3.14 (PyTorch does not yet publish wheels for newer
+versions). The project is managed with [uv](https://docs.astral.sh/uv/)
 (there is a `uv.lock`), but any virtualenv works.
 
 ```bash
 # with uv (creates .venv from the lockfile)
 uv sync
 
-# then either prefix commands with `uv run`, or call the venv python directly:
-.venv/bin/python test.py
+# if uv picks a Python that is too new (e.g. 3.15) and torch fails to install,
+# pin a supported one — uv downloads it automatically:
+uv sync --python 3.12
+
+# then either prefix commands with `uv run` (works on every OS):
+uv run python test.py
+
+# ...or call the venv python directly:
+.venv/bin/python test.py              # Linux / macOS
+.venv\Scripts\python.exe test.py      # Windows
 ```
+
+> **Windows:** if `uv` errors with *"Missing expected target directory for Python
+> minor version link"*, run it from PowerShell or cmd instead of Git Bash.
 
 Two ways to run code, depending on where the file lives:
 
