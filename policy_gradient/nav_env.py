@@ -42,7 +42,9 @@ class State:
     dist_goal_km: float
     goal_bearing: float                        # rad
     obstacle: Optional[tuple] = None           # (clearance_nm to the nearest obstacle's edge, bearing rad)
-    intruder: Optional[tuple] = None           # (distance_nm, bearing rad, aspect rad)
+    # (distance_nm, bearing rad, aspect rad, time to closest approach s, signed miss distance nm;
+    #  miss distance > 0: the intruder will pass on our right)
+    intruder: Optional[tuple] = None
 
 
 def wrap(a):
@@ -116,5 +118,13 @@ class NavEnv:
             bearing = math.atan2(y, x)
             track = math.atan2(float(obs["vy_r"][0]), float(obs["vx_r"][0]))        # direction of relative velocity
             aspect = wrap(track - (bearing + math.pi))   # 0: the intruder is flying straight at us
-            s.intruder = (float(obs["intruder_distance"][0]) * self.env.intruder_obs.dist_norm, bearing, aspect)
+            # closest point of approach, assuming both keep their current velocity (body frame, metres, m/s)
+            io = self.env.intruder_obs
+            rx, ry = x * io.pos_norm, y * io.pos_norm
+            vx, vy = float(obs["vx_r"][0]) * io.spd_norm, float(obs["vy_r"][0]) * io.spd_norm
+            v2 = vx * vx + vy * vy
+            tcpa = max(-(rx * vx + ry * vy) / v2, 0.0) if v2 > 1e-9 else 0.0     # s; 0 if diverging
+            cx, cy = rx + vx * tcpa, ry + vy * tcpa
+            dcpa_nm = math.copysign(math.hypot(cx, cy) / 1000.0 / NM2KM, cy)    # >0: passes on our right
+            s.intruder = (float(obs["intruder_distance"][0]) * io.dist_norm, bearing, aspect, tcpa, dcpa_nm)
         return s

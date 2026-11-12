@@ -56,7 +56,7 @@ class Features:
 
     FAR_NM = 60.0     # "no obstacle / intruder nearby" is encoded as a far-away one
 
-    def __init__(self, stage, n_tilings=8):
+    def __init__(self, stage, n_tilings=8, cpa=False):
         pi = math.pi
         self.coders = [(self._goal, TileCoder((0, -pi), (160, pi), (16, 12), (False, True), n_tilings))]
         if stage >= 2:
@@ -66,6 +66,10 @@ class Features:
         if stage >= 3:
             self.coders.append((self._intruder, TileCoder((0, -pi, -pi), (80, pi, pi), (8, 8, 8),
                                                           (False, True, True), n_tilings)))
+            if cpa:   # appended last, so a checkpoint trained without it still fills the front
+                self.coders.append((self._cpa, TileCoder((0, -15), (400, 15), (10, 15), (False, False), n_tilings)))
+                self.coders.append((self._cpa_joint, TileCoder((0, -15, -pi), (400, 15, pi), (8, 10, 8),
+                                                               (False, False, True), n_tilings)))
         sizes = [c.size for _, c in self.coders]
         self.offsets = np.concatenate(([0], np.cumsum(sizes)[:-1]))
         self.size = int(sum(sizes))
@@ -84,7 +88,16 @@ class Features:
         return (s.goal_bearing, bearing, clearance)
 
     def _intruder(self, s):
-        return s.intruder if s.intruder else (self.FAR_NM + 20, 0.0, math.pi)
+        return s.intruder[:3] if s.intruder else (self.FAR_NM + 20, 0.0, math.pi)
+
+    @staticmethod
+    def _cpa(s):
+        """(time to closest approach, signed miss distance): the quantities a conflict is decided by."""
+        return s.intruder[3:5] if s.intruder else (400.0, 15.0)
+
+    def _cpa_joint(self, s):
+        tcpa, dcpa = self._cpa(s)
+        return (tcpa, dcpa, s.goal_bearing)
 
     def indices(self, state):
         return np.concatenate([coder.indices(point(state)) + off
@@ -93,13 +106,13 @@ class Features:
 
 class ActorCritic:
     def __init__(self, env, stage, gamma=1.0, alpha_w=0.3, alpha_mu=0.3, alpha_sigma=0.02,
-                 sigma_init=0.5, sigma_min=0.05, n_tilings=8, seed=None, n_eval=20):
+                 sigma_init=0.5, sigma_min=0.05, n_tilings=8, seed=None, n_eval=20, cpa=False):
         self.env, self.stage = env, stage
         self.gamma, self.alpha_w, self.alpha_mu, self.alpha_sigma = gamma, alpha_w, alpha_mu, alpha_sigma
         self.log_sigma_min, self.log_sigma_max = math.log(sigma_min), math.log(1.0)
         self.rng = random.Random(seed)
 
-        self.features = Features(stage, n_tilings)
+        self.features = Features(stage, n_tilings, cpa)
         n = self.features.size
         self.w = np.zeros(n)                                                    # v(s) = 0
         self.theta_mu = np.zeros(n)                                             # mu(s) = 0: keep heading

@@ -33,6 +33,8 @@ def main():
     ap.add_argument("--load", help="start from this checkpoint (e.g. the previous stage's)")
     ap.add_argument("--out", help="checkpoint to write (default policy_gradient/checkpoints/stage<N>.npz)")
     ap.add_argument("--watch", action="store_true", help="no training: render the saved policy")
+    ap.add_argument("--cpa", action="store_true",
+                    help="stage 3: add closest-point-of-approach features (time and signed miss distance)")
     ap.add_argument("--evaluate", action="store_true",
                     help="no training: greedy evaluation of the saved policy on --eval-n scenarios")
     args = ap.parse_args()
@@ -43,7 +45,7 @@ def main():
     env = NavEnv(stage=args.stage, scale=args.scale, seed=args.seed,
                  event_penalty=args.event_penalty, lam=args.lam,
                  render_mode="human" if args.watch else None)
-    ac = ActorCritic(env, args.stage, seed=args.seed, n_eval=args.eval_n)
+    ac = ActorCritic(env, args.stage, seed=args.seed, n_eval=args.eval_n, cpa=args.cpa)
 
     src = args.load or (out if (args.watch or args.evaluate) else None)
     if src:
