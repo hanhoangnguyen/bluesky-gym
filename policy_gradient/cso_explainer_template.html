@@ -1,0 +1,779 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contextual stochastic optimization: a guided tour</title>
+<style>
+:root{
+  --bg:#fbfaf7; --fg:#1f2328; --muted:#5d6670; --card:#ffffff; --line:#e3e1db; --soft:#f2f0ea;
+  --blue:#0072B2; --orange:#E69F00; --green:#009E73; --red:#D55E00; --purple:#CC79A7; --sky:#56B4E9; --grey:#6b7280;
+  --ink:#1f2328; --shadow:0 1px 2px rgba(0,0,0,.05),0 4px 14px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#14161a; --fg:#e7e9ec; --muted:#9aa4ae; --card:#1c1f24; --line:#2c3036; --soft:#23272d; --ink:#e7e9ec; --shadow:0 1px 2px rgba(0,0,0,.4); }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:0 20px}
+header.hero{padding:56px 0 24px}
+.eyebrow{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+h1{font-size:clamp(30px,5vw,44px);line-height:1.12;margin:10px 0 14px;letter-spacing:-.02em}
+.lead{font-size:19px;color:var(--muted);max-width:780px}
+nav.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+nav.top .wrap{display:flex;gap:4px;overflow-x:auto;padding:8px 20px;scrollbar-width:thin}
+nav.top a{white-space:nowrap;font-size:13.5px;color:var(--muted);text-decoration:none;padding:5px 10px;border-radius:999px}
+nav.top a:hover{background:var(--soft);color:var(--fg)}
+section{padding:46px 0 10px;scroll-margin-top:52px}
+h2{font-size:28px;letter-spacing:-.01em;margin:0 0 6px}
+h2 .n{color:var(--muted);font-weight:500;margin-right:8px}
+h3{font-size:18px;margin:24px 0 6px}
+p{margin:.5em 0 1em}
+.sub{color:var(--muted);max-width:780px}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9em}
+code{background:var(--soft);padding:1px 6px;border-radius:5px}
+.eq{background:var(--soft);padding:14px 18px;border-radius:12px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:17px;overflow-x:auto;margin:12px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:18px}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:820px){.g2,.g3,.g4{grid-template-columns:1fr}}
+.stat b{display:block;font-size:28px;letter-spacing:-.02em;line-height:1.1}
+.stat span{font-size:13.5px;color:var(--muted)}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;background:var(--soft);color:var(--muted)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.tabs{display:inline-flex;background:var(--soft);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
+.tabs button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:13.5px;padding:6px 12px;border-radius:8px;cursor:pointer}
+.tabs button[aria-pressed=true]{background:var(--card);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.12);font-weight:600}
+button.btn{border:1px solid var(--line);background:var(--card);color:var(--fg);font:inherit;font-size:14px;padding:6px 14px;border-radius:9px;cursor:pointer}
+button.btn:hover{background:var(--soft)}
+label.ctl{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
+label.ctl input[type=range]{width:150px}
+.val{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;color:var(--fg);min-width:52px;display:inline-block}
+svg{display:block;max-width:100%;height:auto}
+svg text{font-family:inherit}
+.scene{background:var(--card);border:1px solid var(--line);border-radius:12px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.note{font-size:13.5px;color:var(--muted);border-left:3px solid var(--line);padding-left:12px;margin:12px 0}
+.callout{background:color-mix(in srgb,var(--orange) 14%,var(--card));border:1px solid color-mix(in srgb,var(--orange) 40%,var(--line));border-radius:12px;padding:12px 16px;font-size:15px}
+.callout.blue{background:color-mix(in srgb,var(--blue) 10%,var(--card));border-color:color-mix(in srgb,var(--blue) 35%,var(--line))}
+.callout.green{background:color-mix(in srgb,var(--green) 10%,var(--card));border-color:color-mix(in srgb,var(--green) 35%,var(--line))}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
+td.k{font-weight:600;white-space:nowrap}
+details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin:8px 0}
+details summary{cursor:pointer;font-weight:600}
+details p{margin:.6em 0 0;color:var(--muted)}
+.bar{height:10px;border-radius:5px;background:var(--soft);position:relative;overflow:hidden}
+.bar>i{position:absolute;top:0;bottom:0}
+.ref{padding:10px 0;border-bottom:1px solid var(--line)}
+.ref b{font-weight:600}
+.ref .why{color:var(--muted);font-size:14.5px;display:block;margin-top:2px}
+.ref a{color:var(--blue);text-decoration:none;font-size:14px}
+.ref a:hover{text-decoration:underline}
+footer{padding:50px 0 70px;color:var(--muted);font-size:14px}
+.tt{position:absolute;pointer-events:none;background:var(--card);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);padding:6px 9px;font-size:12.5px;white-space:nowrap}
+</style>
+</head>
+<body>
+
+<header class="hero"><div class="wrap">
+  <div class="eyebrow">Background reading &middot; for the BlueSky-Gym competition work</div>
+  <h1>Contextual stochastic optimization: deciding well when the future is uncertain but you have clues</h1>
+  <p class="lead">A plain-language tour of the idea your professor pointed to: what it is, how it differs from control theory and reinforcement learning, what it could (and could not) do for <b>dynamic obstacles that scale</b>, and where to read more. Everything marked interactive runs in your browser.</p>
+  <div class="grid g3" style="margin-top:24px">
+    <div class="card"><div class="pill">What it is</div><p style="margin:8px 0 0">Pick a decision <code>z</code> now to minimise the <i>expected</i> cost, given what you observed: <code>E[ f(z, x) | y ]</code>. You see <code>y</code> (today's temperature). You cannot see <code>x</code> yet (tomorrow's demand). The link between them is only statistical, learned from data.</p></div>
+    <div class="card"><div class="pill">Why it might help us</div><p style="margin:8px 0 0">A moving intruder is exactly this shape: we observe its position and velocity (<code>y</code>); where it will be (<code>x</code>) is uncertain. The framework says: predict a <i>distribution</i>, price the risk in the cost, and, for scale, note that <b>expected cost adds up over obstacles</b>.</p></div>
+    <div class="card"><div class="pill">Honest caveats</div><p style="margin:8px 0 0">The single-agent intruders are mostly predictable (data in section 5). In the multi-agent track others react to us, which breaks the framework's key assumption. And the competition requires an RL-based solution, so this would feed RL, not replace it.</p></div>
+  </div>
+</div></header>
+
+<nav class="top"><div class="wrap">
+  <a href="#idea">1 The idea</a><a href="#lab">2 Ice-cream lab</a><a href="#methods">3 Methods</a><a href="#aircraft">4 To aircraft</a>
+  <a href="#study">5 The data</a><a href="#scale">6 Scaling demo</a><a href="#fit">7 Fit with RL</a><a href="#refs">8 References</a>
+</div></nav>
+
+<main class="wrap">
+
+<!-- ================================================================ 1 -->
+<section id="idea">
+  <h2><span class="n">1</span>The idea in one equation</h2>
+  <p class="sub">Your notes, restated. You <b>measure</b> something <code>y</code>. There is no exact formula from <code>y</code> to the thing you care about, <code>x</code>; there is only a loose probabilistic connection. You still have to <b>decide</b> <code>z</code> before <code>x</code> is revealed.</p>
+  <div class="eq">minimize<sub>z</sub> &nbsp; E[ f(z, x) &nbsp;|&nbsp; y ]</div>
+  <div class="grid g3">
+    <div class="card"><div class="pill">y &middot; the context</div><p style="margin:8px 0 0">What you observe now. Today's temperature. Also called <i>side information</i>, <i>features</i> or <i>covariates</i>.</p></div>
+    <div class="card"><div class="pill">x &middot; the uncertain outcome</div><p style="margin:8px 0 0">What you cannot see yet and the cost depends on. Tomorrow's ice-cream demand. Only its <i>conditional distribution given y</i> is available (from past pairs <code>(y<sub>i</sub>, x<sub>i</sub>)</code>).</p></div>
+    <div class="card"><div class="pill">z &middot; the decision</div><p style="margin:8px 0 0">What you choose. How many tubs to order. <code>f(z, x)</code> is the cost of having chosen <code>z</code> once <code>x</code> turns out to be what it is.</p></div>
+  </div>
+  <div class="callout" style="margin-top:14px"><b>Heads-up on letters.</b> Most papers swap the roles: the <i>context</i> is called <code>x</code> and the <i>uncertain outcome</i> is called <code>y</code> (or <code>&xi;</code>). I use the letters from your notes (<code>y</code> observed, <code>x</code> uncertain). When you read Bertsimas &amp; Kallus or the Sadana et al. survey, translate.</div>
+
+  <h3>How is this different from control theory and from RL?</h3>
+  <div class="card" style="overflow-x:auto"><table>
+    <tr><th></th><th>Control theory</th><th>Contextual stochastic optimization</th><th>Reinforcement learning</th></tr>
+    <tr><td class="k">Link from what you see to what happens</td><td>a model: <code>state<sub>t+1</sub> = g(state<sub>t</sub>, input<sub>t</sub>)</code></td><td>only a <b>conditional distribution</b> <code>P(x | y)</code>, learned from data</td><td>unknown dynamics, learned from experience</td></tr>
+    <tr><td class="k">Does my decision change the uncertainty?</td><td>yes: it steers the state (feedback)</td><td><b>no</b>: the outcome <code>x</code> happens regardless (it is <i>exogenous</i>)</td><td>yes: it changes the next state and what you will face</td></tr>
+    <tr><td class="k">How many decisions?</td><td>a sequence</td><td>usually one (or one per step, re-planned)</td><td>a sequence, and the long-run total matters</td></tr>
+    <tr><td class="k">What is learned</td><td>a model or gains</td><td>a <b>decision rule</b> <code>z(y)</code>, or weights over past data</td><td>a policy and/or value function</td></tr>
+    <tr><td class="k">Everyday example</td><td>keep a drone level</td><td>how much ice cream to order</td><td>learn to play a game</td></tr>
+  </table></div>
+  <p class="note">My reading: CSO is the "one decision, uncertainty I cannot influence" special case of RL, with one extra gift: the cost function <code>f</code> is <i>known</i>, so after you see <code>x</code> you can score <b>every</b> decision you could have made, not just the one you took. The 2025 survey by Sadana et al. (section 8) notes that training a parameterised policy was already standard in RL under the name policy-gradient methods.</p>
+</section>
+
+<!-- ================================================================ 2 -->
+<section id="lab">
+  <h2><span class="n">2</span>The ice-cream lab</h2>
+  <p class="sub">You sell ice cream. Each morning you see the temperature <code>y</code> and must order tubs <code>z</code> before knowing the day's demand <code>x</code>. Order too little and you lose sales; order too much and it melts. Below, five ways to decide are compared on the same fake data. <b>Drag today's temperature</b> and watch the decisions move.</p>
+  <div class="card">
+    <div class="row" style="justify-content:space-between;margin-bottom:10px">
+      <div class="tabs" id="nvRel"></div>
+      <button class="btn" id="nvResample">&#8635; New data</button>
+    </div>
+    <div class="grid g3" style="gap:6px 22px;margin-bottom:10px">
+      <label class="ctl">today's temperature <input type="range" id="nvY" min="8" max="38" step="0.5" value="30"><span class="val" id="nvYV"></span></label>
+      <label class="ctl">stock-out costs &times; more <input type="range" id="nvK" min="1" max="9" step="0.5" value="3"><span class="val" id="nvKV"></span></label>
+      <label class="ctl">demand noise <input type="range" id="nvS" min="2" max="25" step="1" value="10"><span class="val" id="nvSV"></span></label>
+      <label class="ctl">days of history <input type="range" id="nvN" min="40" max="800" step="20" value="300"><span class="val" id="nvNV"></span></label>
+      <label class="ctl">neighbours <i>k</i> <input type="range" id="nvKnn" min="5" max="120" step="5" value="30"><span class="val" id="nvKnnV"></span></label>
+    </div>
+    <div class="grid" style="grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:16px;align-items:start" id="nvGrid">
+      <div><svg id="nvScatter" viewBox="0 0 520 340" class="scene" role="img" aria-label="Demand against temperature with each method's order quantity"></svg>
+        <div class="legend" id="nvLegend"></div></div>
+      <div><svg id="nvCost" viewBox="0 0 340 340" class="scene" role="img" aria-label="Expected cost of today's order"></svg></div>
+    </div>
+    <div style="overflow-x:auto;margin-top:12px"><table id="nvTable"></table></div>
+  </div>
+  <style>@media(max-width:820px){#nvGrid{grid-template-columns:1fr!important}}</style>
+  <div class="grid g2" style="margin-top:14px">
+    <div class="callout blue"><b>Try this.</b> Set "stock-out costs &times; more" to 1 (leftovers and lost sales cost the same). The forecast-the-mean method is now nearly as good as the rest. Raise it to 5: ordering the <i>average</i> demand leaves you short half the time, and its cost jumps.</div>
+    <div class="callout blue"><b>And this.</b> Switch the relationship to <i>S-curve</i> (demand saturates on hot days). The straight-line methods miss the bend; the neighbour method follows it. Then try <i>no relationship</i>: the clue is useless, and ignoring it is hard to beat.</div>
+  </div>
+  <div class="callout green" style="margin-top:14px"><b>The lesson to remember.</b> The best order is a <b>quantile</b> of the demand distribution, not its average: with stock-out cost <i>k</i> times leftover cost, order enough to cover demand with probability <i>k / (1 + k)</i>. A point forecast throws away exactly the information (the spread, and which side of it hurts more) that the decision needs. The same is true for aircraft: being inside 5&nbsp;NM is far worse than being 20&nbsp;NM away, so <i>how likely</i> a conflict is matters more than <i>where the intruder will be on average</i>.</div>
+</section>
+
+<!-- ================================================================ 3 -->
+<section id="methods">
+  <h2><span class="n">3</span>A map of the methods</h2>
+  <p class="sub">All of them try to approximate the same thing, the best decision for each value of <code>y</code>. They differ in <i>what they learn</i> and <i>how much work happens at decision time</i>. The survey by Sadana et al. groups the literature into three frameworks: <b>decision-rule optimization</b>, <b>sequential learning and optimization (SLO)</b> and <b>integrated learning and optimization (ILO)</b>. The lab above uses the first four rows.</p>
+  <div class="card" style="overflow-x:auto"><table>
+    <tr><th>Approach</th><th>What it does</th><th>Cost at decision time</th><th>Watch out for</th><th>Start reading</th></tr>
+    <tr><td class="k">1. Ignore the clue<br><small>SAA</small></td><td>Optimise over all past outcomes, ignoring <code>y</code>: <code>z = argmin (1/n) &Sigma; f(z, x<sub>i</sub>)</code></td><td>none (precomputed)</td><td>Wastes <code>y</code>. The baseline everyone beats when <code>y</code> is informative.</td><td>Shapiro et al., book</td></tr>
+    <tr><td class="k">2. Estimate, then optimise<br><small>SLO</small></td><td>Fit a predictor <code>x&#770;(y)</code>, then solve <code>min<sub>z</sub> f(z, x&#770;(y))</code></td><td>one solve of the optimisation</td><td>Exact only if <code>f</code> is <i>linear</i> in <code>x</code>. Otherwise it ignores spread and risk (Jensen). For linear problems plug-in can be surprisingly good.</td><td>Hu, Kallus &amp; Mao (2022)</td></tr>
+    <tr><td class="k">3. Weighted SAA<br><small>SLO</small></td><td>Re-weight past outcomes by how similar their context was to today's (nearest neighbours, kernels, forests), then optimise the weighted average</td><td>find neighbours + one solve</td><td>Needs the data at hand; cost grows with the dataset unless indexed. Needs enough data near today's <code>y</code>.</td><td>Bertsimas &amp; Kallus (2020); Kallus &amp; Mao (2023)</td></tr>
+    <tr><td class="k">4. Learn the decision rule<br><small>decision-rule optimisation</small></td><td>Skip the distribution; train <code>z = &pi;<sub>&theta;</sub>(y)</code> to minimise the average <i>realised cost</i> on past data</td><td>evaluate <code>&pi;</code> (very fast)</td><td>Needs a rich enough <code>&pi;</code>; no explicit risk picture; constraints are harder to guarantee. <b>Policy gradient is this idea</b> when <code>f</code> cannot be differentiated.</td><td>Ban &amp; Rudin (2019)</td></tr>
+    <tr><td class="k">5. Train the predictor for the decision<br><small>ILO / decision-focused learning</small></td><td>Train the predictor so the <i>decision it leads to</i> is good, not so the prediction is accurate (differentiate through the optimiser, or use a surrogate loss like SPO+)</td><td>one solve</td><td>Harder to train; benefit depends on how wrong the predictor's model is.</td><td>Elmachtoub &amp; Grigas (2022); Donti et al. (2017); Mandi et al. (2024)</td></tr>
+  </table></div>
+  <p class="note">Two extras worth knowing. <b>Robust versions</b> replace "expected cost" by "worst case over a plausible set of outcomes", where the set depends on <code>y</code> (Chenreddy, Bandi &amp; Delage 2022). <b>Conformal prediction</b> wraps a predictor with regions that contain the truth with a chosen probability, which gives safety guarantees for planning among moving agents (Lindemann et al. 2023).</p>
+</section>
+
+<!-- ================================================================ 4 -->
+<section id="aircraft">
+  <h2><span class="n">4</span>From ice cream to aircraft</h2>
+  <p class="sub">The translation is direct. A moving intruder is a demand you cannot see yet.</p>
+  <div class="card" style="overflow-x:auto"><table>
+      <tr><th>Ice cream</th><th>Dynamic obstacle</th></tr>
+      <tr><td><code>y</code>: temperature</td><td><code>y</code>: the intruder's observed position and velocity, plus what we know of how routes are built (sector shape, entry/exit structure)</td></tr>
+      <tr><td><code>x</code>: tomorrow's demand</td><td><code>x</code>: where the intruder will be over the next minutes (its future path)</td></tr>
+      <tr><td><code>z</code>: tubs to order</td><td><code>z</code>: our heading and speed command (or a short plan)</td></tr>
+      <tr><td><code>f(z, x)</code>: lost sales + leftovers</td><td><code>f(z, x)</code>: detour time + a large cost if separation drops below 5&nbsp;NM</td></tr>
+      <tr><td><code>P(x | y)</code>: "hotter means more, and more variable"</td><td><code>P(x | y)</code>: "it probably keeps going straight; some chance it bends"</td></tr>
+      <tr><td>demand is not affected by my order</td><td><b>single-agent:</b> intruders ignore us, so yes. <b>multi-agent:</b> the others react to us, so <b>no</b></td></tr>
+    </table></div>
+  <div class="card" style="margin-top:16px;padding:12px"><svg id="acSketch" viewBox="0 0 900 310" role="img" aria-label="Observe the intruder, its distribution of futures, choose a heading by risk"></svg>
+    <p class="note" style="margin:8px 6px 4px">Left to right: we <b>observe</b> the intruder (<code>y</code>); its possible <b>futures</b> form a fan (<code>x</code> given <code>y</code>), here some bending off the straight line; we then score each candidate heading by the share of futures in which it ends within the separation limit (the dashed circle) and <b>choose</b> a low-risk one with a small detour (<code>z</code>). The colours in the right panel are computed from the same fan.</p></div>
+  <div class="callout" style="margin-top:14px"><b>Why "exogenous" matters.</b> CSO assumes that what I decide does not change what happens. For the single-agent track that is true by construction (intruders fly fixed routes with BlueSky's own resolution off). It gives us two things: a clean statistical problem, and the ability to <b>replay logged intruder paths and score every heading we could have chosen</b>. In the multi-agent track the other aircraft are learners reacting to us; that is a game, and plain CSO is the wrong tool without extra machinery.</div>
+</section>
+
+<!-- ================================================================ 5 -->
+<section id="study">
+  <h2><span class="n">5</span>What the competition's own data says</h2>
+  <p class="sub">Before building anything, measure. I drew <b id="stN"></b> scenarios from the competition generator (single-agent defaults: 10 intruders, seed&nbsp;42, <b id="stR"></b> intruder routes), flew the <i>neutral</i> policy (straight to the goal) through each with plain kinematics, and asked how predictable the intruders are and how many matter at once.</p>
+  <div class="grid g4" id="stStats"></div>
+  <div class="grid g2" style="margin-top:16px">
+    <div class="card"><h3 style="margin-top:0">How wrong is "keeps going straight"?</h3>
+      <p class="sub" style="font-size:14px;margin-top:0">Error of a constant-velocity forecast, by how far ahead you look. Bars: 90th percentile, for the intruders that <i>do</i> bend inside the horizon.</p>
+      <svg id="stErr" viewBox="0 0 480 260" role="img" aria-label="Forecast error by horizon"></svg></div>
+    <div class="card"><h3 style="margin-top:0">How many intruders are real threats at once?</h3>
+      <p class="sub" style="font-size:14px;margin-top:0">Share of decision moments (every 10&nbsp;s) with <i>n</i> intruders that will come within 5&nbsp;NM in the next 5 minutes if we fly straight.</p>
+      <svg id="stThreat" viewBox="0 0 480 260" role="img" aria-label="Simultaneous threats"></svg></div>
+  </div>
+  <div class="grid g2" style="margin-top:16px">
+    <div class="card"><h3 style="margin-top:0">Bend sizes</h3>
+      <p class="sub" style="font-size:14px;margin-top:0">Routes with a mid waypoint: the angle by which they turn.</p>
+      <svg id="stBend" viewBox="0 0 480 220" role="img" aria-label="Bend angle histogram"></svg></div>
+    <div class="card"><h3 style="margin-top:0">Distance is a bad filter</h3>
+      <p class="sub" style="font-size:14px;margin-top:0">Intruders within 30&nbsp;NM at once (grey), against how many are actual threats (blue).</p>
+      <svg id="stNear" viewBox="0 0 480 240" role="img" aria-label="Intruders within 30 NM"></svg></div>
+  </div>
+  <div class="callout green" style="margin-top:16px" id="stTake"></div>
+  <p class="note">How to read this, and what I assumed: intruders follow their route at constant speed and keep their last heading after the final waypoint; the neutral aircraft flies at 150&nbsp;m/s straight to its goal; "threat" means a straight-line loss of separation within 300&nbsp;s. I did not run BlueSky for this. The scenarios come from the same generator and seed as the official evaluation stream, but I did not verify they are bit-identical to the harness's. Script: <code>policy_gradient/intruder_study.py</code>.</p>
+</section>
+
+<!-- ================================================================ 6 -->
+<section id="scale">
+  <h2><span class="n">6</span>The scaling idea: a risk profile that does not grow with the number of obstacles</h2>
+  <p class="sub">Your professor's question was a scalable method for dynamic obstacles. Here is the CSO-flavoured answer, as a toy you can run. For every candidate heading we estimate the <b>probability of a conflict</b> against each intruder's <i>distribution</i> of futures, then combine. The result is a fixed-size vector (13 numbers) however many intruders there are.</p>
+  <div class="card">
+    <div class="row" style="justify-content:space-between;margin-bottom:8px">
+      <div class="row" style="gap:6px 18px">
+        <label class="ctl">intruders <i>N</i> <input type="range" id="scN" min="1" max="60" step="1" value="8"><span class="val" id="scNV"></span></label>
+        <label class="ctl">samples per intruder <i>M</i> <input type="range" id="scM" min="20" max="400" step="20" value="100"><span class="val" id="scMV"></span></label>
+      </div>
+      <div class="row" style="gap:6px 18px">
+        <label class="ctl">chance of a bend <input type="range" id="scP" min="0" max="1" step="0.05" value="0.5"><span class="val" id="scPV"></span></label>
+        <label class="ctl">bend spread <input type="range" id="scB" min="5" max="60" step="5" value="25"><span class="val" id="scBV"></span></label>
+      </div>
+    </div>
+    <div class="row" style="justify-content:space-between;margin-bottom:10px">
+      <div class="row"><span class="mono" style="color:var(--muted)">use only the most urgent</span><div class="tabs" id="scTop"></div></div>
+      <div class="row"><button class="btn" id="scNew">&#8635; New traffic</button><button class="btn" id="scMeasure">Measure timing vs. N</button></div>
+    </div>
+    <div class="grid" style="grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;align-items:start" id="scGrid">
+      <svg id="scScene" viewBox="-45 -52 90 66" class="scene" role="img" aria-label="Aircraft with candidate headings and intruders"></svg>
+      <div>
+        <div id="scOut" style="font-size:14.5px"></div>
+        <svg id="scTime" viewBox="0 0 400 190" style="margin-top:10px" role="img" aria-label="Computation time versus number of intruders"></svg>
+      </div>
+    </div>
+    <svg id="scBars" viewBox="0 0 860 190" style="margin-top:12px" role="img" aria-label="Conflict probability by candidate heading"></svg>
+  </div>
+  <style>@media(max-width:820px){#scGrid{grid-template-columns:1fr!important}}</style>
+  <div class="grid g2" style="margin-top:14px">
+    <div class="card"><h3 style="margin-top:0">Why it scales</h3>
+      <p style="margin:0">The expected cost of a decision <b>adds up</b> over obstacles: <code>E[&Sigma;<sub>i</sub> penalty<sub>i</sub>] = &Sigma;<sub>i</sub> E[penalty<sub>i</sub>]</code>, even if the obstacles are correlated. Each obstacle's risk depends only on <i>its own</i> context. So the work is <code>N &times; K headings &times; M samples &times; T time steps</code>: <b>linear in N</b>. For the chance of <i>any</i> conflict I assume independent intruders, <code>1 &minus; &Pi;(1 &minus; p<sub>i</sub>)</code> (a union bound <code>&Sigma; p<sub>i</sub></code> works without independence).</p></div>
+    <div class="card"><h3 style="margin-top:0">What would blow up, and what does not</h3>
+      <p style="margin:0">Enumerating every combination of every intruder's possible future would need <code>M<sup>N</sup></code> cases: with M=100, N=12 that is 10<sup>24</sup>. Monte-Carlo does <i>not</i> do that; it samples. What does grow is (i) the work, linearly in N, and (ii) the samples needed to see a <i>rare</i> conflict (roughly <code>1/p</code>). Dynamic programming over the joint state, or scenario trees over many steps, are where the exponential lives.</p></div>
+  </div>
+  <p class="note">This is a <b>toy</b>: straight-line intruders with an optional single bend (like the generator's routes), our aircraft flying each candidate heading for 5 minutes with no turn lag, independent intruders, and timings measured in your browser's JavaScript, not in the competition's Python. It illustrates the structure of the idea, not the speed or accuracy we would get in the real pipeline. "Most urgent" ranks intruders by the closest any candidate heading would come to them under a straight-line forecast.</p>
+</section>
+
+<!-- ================================================================ 7 -->
+<section id="fit">
+  <h2><span class="n">7</span>How it could fit with what we are doing</h2>
+  <p class="sub">The competition says the solution <b>must be reinforcement-learning-based, not a hand-engineered classical controller or a pure search/optimiser</b>. So the sensible reading is: use CSO ideas to improve what the RL agent <i>sees</i>, <i>is rewarded for</i> and <i>learns from</i>, rather than to replace it. Four options, from safest to most uncertain:</p>
+  <div class="grid g2">
+    <div class="card"><div class="pill">A &middot; Observation</div><h3 style="margin-top:6px">A fixed-size risk profile as features</h3>
+      <p style="margin:0">Replace "nearest obstacle and nearest intruder with CPA features" by the vector from section 6: conflict probability per candidate heading, summed over <i>all</i> intruders. Same size for 1 or 10 intruders, so it plugs into our tile coding or a neural network. <b>Risk:</b> needs a predictor for bends; a few milliseconds per step.</p></div>
+    <div class="card"><div class="pill">B &middot; Reward</div><h3 style="margin-top:6px">Expected risk instead of rare events</h3>
+      <p style="margin:0">Today the conflict penalty only fires when separation is already lost (rare, sparse). A dense term based on the <i>expected</i> conflict cost gives credit earlier. Potential-based shaping keeps the best policy unchanged. <b>Risk:</b> badly scaled shaping can distort behaviour; test against the scored metrics.</p></div>
+    <div class="card"><div class="pill">C &middot; Training signal</div><h3 style="margin-top:6px">Score every heading from the same state</h3>
+      <p style="margin:0">Because single-agent intruders ignore us, a logged intruder path lets us compute the cost of <i>every</i> heading, not just the one sampled, a richer signal than policy gradient's single sampled action (my reading, not a claim from the literature). Could be an auxiliary loss or a warm start. <b>Risk:</b> only one-step; our own future state still matters. Untested.</p></div>
+    <div class="card"><div class="pill">D &middot; Safety layer</div><h3 style="margin-top:6px">A risk-aware filter around the RL action</h3>
+      <p style="margin:0">Nudge the RL heading to the nearest low-risk one. Easy to build and the most effective in practice. <b>Risk:</b> it edges toward the "classical controller" the rules exclude. <b>Ask the organisers</b> before relying on it (contact details are in <code>COMPETITION.md</code>).</p></div>
+  </div>
+  <h3>What I would test first</h3>
+  <div class="card">
+    <ol style="margin:0;padding-left:20px">
+      <li><b>Extend our testbed</b> from 1 to about 3&ndash;10 intruders (the generator already makes them).</li>
+      <li>Compare, at equal training budget: our current <i>nearest-1 + CPA</i> features against option A. Measure intrusion rate, goal rate and compute time per step on the same 100 scenarios.</li>
+      <li>Only if A helps, try B and C. Leave D until the rules question is answered.</li>
+    </ol>
+  </div>
+  <div class="callout" style="margin-top:14px"><b>Be realistic about the payoff in the single-agent track.</b> The data in section 5 says a plain straight-line check already catches nearly all upcoming conflicts. The headroom for better <i>prediction</i> is small; the real value of this view is the <b>scalable representation</b> (sections 6 and 7A) and a graded risk instead of a yes/no. The prediction side matters more in the multi-agent track, where intent is genuinely uncertain, but that is also where the exogeneity assumption fails.</div>
+  <h3>Questions to take back to your professor</h3>
+  <div class="card">
+    <ol style="margin:0;padding-left:20px">
+      <li>By <b>scalable</b>, do you mean computation per decision as the number of obstacles grows, sample complexity, or the size of the learned model? (I assumed the first.)</li>
+      <li>Is the uncertainty you have in mind about obstacle <b>motion</b> (intent, bends), or about sensing noise?</li>
+      <li>Is a model-based risk estimate <b>inside</b> an RL pipeline acceptable under the competition's "RL-based" rule? Would a risk-aware filter be?</li>
+      <li>For multi-agent: how would you handle other agents that react to our decisions, given CSO assumes they do not?</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ================================================================ 8 -->
+<section id="refs">
+  <h2><span class="n">8</span>References</h2>
+  <p class="sub">Bibliographic details checked against publisher or arXiv listings on 19 Nov 2026, except where marked. Grouped by what you would read them for.</p>
+
+  <h3>Start here</h3>
+  <div class="card">
+    <div class="ref"><b>Sadana, Chenreddy, Delage, Forel, Frejinger, Vidal.</b> A survey of contextual optimization methods for decision-making under uncertainty. <i>European Journal of Operational Research</i> 320(2):271&ndash;289, 2025. <a href="https://doi.org/10.1016/j.ejor.2024.03.020">doi</a> &middot; <a href="https://arxiv.org/abs/2306.10374">arXiv:2306.10374</a>
+      <span class="why">The map of the field: the contextual stochastic optimization problem, the three frameworks (decision-rule optimisation, SLO, ILO), and the link to policy gradients. Read this first.</span></div>
+    <div class="ref"><b>Bertsimas &amp; Kallus.</b> From predictive to prescriptive analytics. <i>Management Science</i> 66(3):1025&ndash;1044, 2020. <a href="https://doi.org/10.1287/mnsc.2018.3253">doi</a> &middot; <a href="https://arxiv.org/abs/1402.5481">arXiv:1402.5481</a>
+      <span class="why">The weighted-SAA idea (nearest neighbours, kernels, trees) and the "coefficient of prescriptiveness". Note: their <code>x</code> is the context and <code>y</code> the uncertainty.</span></div>
+    <div class="ref"><b>Ban &amp; Rudin.</b> The big data newsvendor: practical insights from machine learning. <i>Operations Research</i> 67(1):90&ndash;108, 2019. <a href="https://doi.org/10.1287/opre.2018.1757">doi</a>
+      <span class="why">The ice-cream problem done properly: learn the order rule directly from features; shows that leaving out features gives inconsistent decisions.</span></div>
+  </div>
+
+  <h3>Predict-then-optimise, and training for the decision</h3>
+  <div class="card">
+    <div class="ref"><b>Elmachtoub &amp; Grigas.</b> Smart "predict, then optimize". <i>Management Science</i> 68(1):9&ndash;26, 2022. <a href="https://doi.org/10.1287/mnsc.2020.3922">doi</a> &middot; <a href="https://arxiv.org/abs/1710.08005">arXiv:1710.08005</a>
+      <span class="why">The SPO+ loss: train a predictor for the decision it leads to. The standard decision-focused-learning reference for linear problems.</span></div>
+    <div class="ref"><b>Hu, Kallus &amp; Mao.</b> Fast rates for contextual linear optimization. <i>Management Science</i> 68(6):4236&ndash;4245, 2022. <a href="https://doi.org/10.1287/mnsc.2022.4383">doi</a> &middot; <a href="https://arxiv.org/abs/2011.03030">arXiv:2011.03030</a>
+      <span class="why">A useful corrective: the simple "estimate, then optimise" approach can have faster regret rates than integrated methods, under conditions.</span></div>
+    <div class="ref"><b>Kallus &amp; Mao.</b> Stochastic optimization forests. <i>Management Science</i> 69(4):1975&ndash;1994, 2023. <a href="https://doi.org/10.1287/mnsc.2022.4458">doi</a> &middot; <a href="https://arxiv.org/abs/2008.07473">arXiv:2008.07473</a>
+      <span class="why">Forests whose splits target decision quality, with fast approximate splitting criteria.</span></div>
+    <div class="ref"><b>Donti, Amos &amp; Kolter.</b> Task-based end-to-end model learning in stochastic optimization. <i>NeurIPS</i> 2017, pp. 5484&ndash;5494. <a href="https://arxiv.org/abs/1703.04529">arXiv:1703.04529</a>
+      <span class="why">Differentiate through a stochastic program to train a probabilistic model for the downstream task.</span></div>
+    <div class="ref"><b>Mandi, Kotary, Berden, Mulamba, Bucarey, Guns, Fioretto.</b> Decision-focused learning: foundations, state of the art, benchmark and future opportunities. <i>Journal of Artificial Intelligence Research</i> 81:1623&ndash;1701, 2024. <a href="https://doi.org/10.1613/jair.1.15320">doi</a> &middot; <a href="https://arxiv.org/abs/2307.13565">arXiv:2307.13565</a>
+      <span class="why">The survey and benchmark for decision-focused learning, with code.</span></div>
+  </div>
+
+  <h3>Robust and guaranteed versions</h3>
+  <div class="card">
+    <div class="ref"><b>Chenreddy, Bandi &amp; Delage.</b> Data-driven conditional robust optimization. <i>NeurIPS</i> 2022. <a href="https://proceedings.neurips.cc/paper_files/paper/2022/hash/3df874367ce2c43891aab1ab23ae6959-Abstract.html">proceedings</a>
+      <span class="why">Uncertainty sets that depend on the context, with coverage guarantees.</span></div>
+    <div class="ref"><b>Calafiore &amp; Campi.</b> The scenario approach to robust control design. <i>IEEE Transactions on Automatic Control</i> 51(5):742&ndash;753, 2006. <a href="https://doi.org/10.1109/TAC.2006.875041">doi</a>
+      <span class="why">How many sampled scenarios you need for a stated probabilistic guarantee. Relevant to "how big should M be".</span></div>
+    <div class="ref"><b>Shapiro, Dentcheva &amp; Ruszczy&nacute;ski.</b> <i>Lectures on Stochastic Programming: Modeling and Theory</i>, 3rd ed. SIAM, 2021. ISBN 978-1-61197-658-8.
+      <span class="why">The textbook behind sample-average approximation, risk measures and chance constraints.</span></div>
+  </div>
+
+  <h3>Closest to our problem: moving obstacles and aircraft</h3>
+  <div class="card">
+    <div class="ref"><b>Lindemann, Cleaveland, Shim &amp; Pappas.</b> Safe planning in dynamic environments using conformal prediction. <i>IEEE Robotics and Automation Letters</i> 8(8), 2023. <a href="https://arxiv.org/abs/2210.10254">arXiv:2210.10254</a>
+      <span class="why">Learned trajectory predictors plus conformal prediction regions inside an MPC planner, with a probabilistic safety guarantee. The closest "prediction under uncertainty feeds planning" paper I found.</span></div>
+    <div class="ref"><b>Blackmore, Ono &amp; Williams.</b> Chance-constrained optimal path planning with obstacles. <i>IEEE Transactions on Robotics</i> 27(6):1080&ndash;1094, 2011. <a href="https://doi.org/10.1109/TRO.2011.2161160">doi</a>
+      <span class="why">Plan a path whose collision probability is bounded; includes an aircraft obstacle-avoidance example.</span></div>
+    <div class="ref"><b>Prandini, Hu, Lygeros &amp; Sastry.</b> A probabilistic approach to aircraft conflict detection. <i>IEEE Transactions on Intelligent Transportation Systems</i> 1(4):199&ndash;220, 2000. <a href="https://dblp.org/rec/journals/tits/PrandiniHLS00">dblp</a>
+      <span class="why">Probability of conflict between aircraft under trajectory uncertainty. The air-traffic version of section 6.</span></div>
+    <div class="ref"><b>Mesbah.</b> Stochastic model predictive control: an overview and perspectives for future research. <i>IEEE Control Systems Magazine</i> 36(6), 2016. <a href="https://doi.org/10.1109/MCS.2016.2602087">doi</a>
+      <span class="why">The control-theory cousin: MPC with chance constraints. Good for seeing where CSO and control meet.</span></div>
+    <div class="ref"><b>van den Berg, Guy, Lin &amp; Manocha.</b> Reciprocal n-body collision avoidance. <i>Robotics Research (ISRR 2009)</i>, Springer Tracts in Advanced Robotics 70, 2011, pp. 3&ndash;19. <a href="https://doi.org/10.1007/978-3-642-19457-3_1">doi</a>
+      <span class="why">A non-learning answer to "scale to many moving obstacles": each agent solves a small linear program from half-planes. Useful as a scalability benchmark.</span></div>
+  </div>
+
+  <h3>Bridge to RL</h3>
+  <div class="card">
+    <div class="ref"><b>Sutton &amp; Barto.</b> <i>Reinforcement Learning: An Introduction</i>, 2nd ed., MIT Press, 2018, chapter 13; and <b>Sutton, McAllester, Singh &amp; Mansour</b>, Policy gradient methods for reinforcement learning with function approximation, <i>NeurIPS</i> 1999.
+      <span class="why">What you already know. <i>Not independently re-verified here; the Sadana et al. survey cites the 1999 paper as an early example of parameterised policies in RL.</i></span></div>
+  </div>
+  <div class="callout" style="margin-top:14px"><b>A gap, honestly stated.</b> I searched for work that applies decision-focused learning to dynamic-obstacle or air-traffic trajectory prediction and did not find a canonical paper that does exactly that; the closest are the conformal-prediction and chance-constrained planning papers above. A short search is not proof it does not exist, but it suggests there may be room for a contribution, which the competition rewards under "novelty".</div>
+</section>
+
+</main>
+
+<footer><div class="wrap">
+  Companion to <code>policy_gradient/explainer.html</code>. Data in section 5: <code>policy_gradient/intruder_study.py</code>; page built by <code>build_cso_explainer.py</code>. The ice-cream data and the scaling demo are synthetic and run entirely in your browser.
+</div></footer>
+
+<script>
+const DATA = __DATA__;
+const $ = (s, r = document) => r.querySelector(s);
+const SVGNS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs = {}, parent = null, text = null){
+  const e = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text !== null) e.textContent = text;
+  if (parent) parent.appendChild(e);
+  return e;
+}
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const clamp = (x, lo, hi) => Math.min(Math.max(x, lo), hi);
+function tabs(container, items, current, onPick){
+  container.innerHTML = '';
+  items.forEach(it => {
+    const b = document.createElement('button');
+    b.textContent = it.label; b.dataset.v = it.value;
+    b.setAttribute('aria-pressed', String(it.value === current));
+    b.onclick = () => { [...container.children].forEach(c => c.setAttribute('aria-pressed', String(c === b))); onPick(it.value); };
+    container.appendChild(b);
+  });
+}
+function niceTicks(lo, hi, n){
+  const span = (hi - lo) || 1, raw = span / n, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const step = [1, 2, 2.5, 5, 10].map(k => k * mag).find(v => v >= raw);
+  const out = []; for (let v = Math.floor(lo / step + 1e-9) * step; v <= Math.ceil(hi / step - 1e-9) * step + step * 1e-6; v += step) out.push(+v.toFixed(10));
+  return out;
+}
+function mulberry32(a){ return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function randn(rng){ let u = 0; while (!u) u = rng(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * rng()); }
+// inverse normal CDF (Acklam)
+function normInv(p){
+  const a = [-3.969683028665376e+01, 2.209460984245205e+02, -2.759285104469687e+02, 1.383577518672690e+02, -3.066479806614716e+01, 2.506628277459239e+00];
+  const b = [-5.447609879822406e+01, 1.615858368580409e+02, -1.556989798598866e+02, 6.680131188771972e+01, -1.328068155288572e+01];
+  const c = [-7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e+00, -2.549732539343734e+00, 4.374664141464968e+00, 2.938163982698783e+00];
+  const d = [7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e+00, 3.754408661907416e+00];
+  const pl = 0.02425; let q, r;
+  if (p < pl){ q = Math.sqrt(-2 * Math.log(p)); return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1); }
+  if (p > 1 - pl){ q = Math.sqrt(-2 * Math.log(1 - p)); return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1); }
+  q = p - 0.5; r = q * q;
+  return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5]) * q / (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
+}
+
+/* ======================================================================= 2: ice-cream lab */
+(function(){
+  const MEAN = {linear: y => 10 + 3 * (y - 8), scurve: y => 10 + 90 / (1 + Math.exp(-(y - 23) / 3.5)), none: y => 50};
+  const SD = (y, s0) => s0 * (0.6 + 0.8 * (y - 8) / 30);
+  const COLORS = {saa: '--grey', fc: '--sky', knn: '--orange', erm: '--green', oracle: '--ink'};
+  const NAMES = {saa: 'Ignore the clue (SAA)', fc: 'Forecast the mean, order it', knn: 'Neighbours (weighted SAA)', erm: 'Linear decision rule (ERM)', oracle: 'Best possible (true distribution)'};
+  const S = {rel: 'linear', seed: 7};
+  const loss = (z, x, t) => t * Math.max(x - z, 0) + (1 - t) * Math.max(z - x, 0);
+  const rel = $('#nvRel');
+  tabs(rel, [{label: 'linear', value: 'linear'}, {label: 'S-curve', value: 'scurve'}, {label: 'no relationship', value: 'none'}], 'linear', v => { S.rel = v; run(); });
+  $('#nvResample').onclick = () => { S.seed++; run(); };
+  ['nvY', 'nvK', 'nvS', 'nvN', 'nvKnn'].forEach(id => $('#' + id).oninput = run);
+
+  function quantile(arr, t){ const a = [...arr].sort((p, q) => p - q); return a[clamp(Math.ceil(t * a.length) - 1, 0, a.length - 1)]; }
+  function ols(ys, xs){
+    const n = ys.length, my = ys.reduce((a, b) => a + b) / n, mx = xs.reduce((a, b) => a + b) / n;
+    let sxy = 0, sxx = 0; for (let i = 0; i < n; i++){ sxy += (ys[i] - my) * (xs[i] - mx); sxx += (ys[i] - my) ** 2; }
+    const b = sxy / sxx; return [mx - b * my, b];
+  }
+  function quantReg(ys, xs, t){            // IRLS for min sum pinball loss, 2 parameters
+    let [a, b] = ols(ys, xs);
+    for (let it = 0; it < 60; it++){
+      let s0 = 0, s1 = 0, s2 = 0, r0 = 0, r1 = 0;
+      for (let i = 0; i < ys.length; i++){
+        const r = xs[i] - (a + b * ys[i]), w = (r >= 0 ? t : 1 - t) / Math.max(Math.abs(r), 1e-3);
+        s0 += w; s1 += w * ys[i]; s2 += w * ys[i] * ys[i]; r0 += w * xs[i]; r1 += w * ys[i] * xs[i];
+      }
+      const det = s0 * s2 - s1 * s1; if (Math.abs(det) < 1e-12) break;
+      a = (r0 * s2 - r1 * s1) / det; b = (s0 * r1 - s1 * r0) / det;
+    }
+    return [a, b];
+  }
+  function run(){
+    const n = +$('#nvN').value, s0 = +$('#nvS').value, kk = +$('#nvK').value, kn = Math.min(+$('#nvKnn').value, n), y0 = +$('#nvY').value;
+    const t = kk / (1 + kk);                                      // cost share of ordering too little
+    $('#nvYV').textContent = y0.toFixed(1) + ' °C'; $('#nvKV').textContent = '×' + kk.toFixed(1); $('#nvSV').textContent = s0;
+    $('#nvNV').textContent = n; $('#nvKnnV').textContent = kn;
+    const rng = mulberry32(S.seed * 1009 + (S.rel === 'linear' ? 1 : S.rel === 'scurve' ? 2 : 3));
+    const mean = MEAN[S.rel];
+    const draw = y => Math.max(0, mean(y) + SD(y, s0) * randn(rng));
+    const ys = [], xs = [];
+    for (let i = 0; i < n; i++){ const y = 8 + 30 * rng(); ys.push(y); xs.push(draw(y)); }
+    const order = ys.map((_, i) => i).sort((a, b) => ys[a] - ys[b]);
+    const sy = order.map(i => ys[i]), sx = order.map(i => xs[i]);
+    // methods
+    const zSAA = quantile(xs, t);
+    const [fa, fb] = ols(ys, xs), [ea, eb] = quantReg(ys, xs, t);
+    function window(y){                                           // k nearest in 1-D via a sorted array
+      let lo = 0, hi = n; while (lo < hi){ const m = (lo + hi) >> 1; if (sy[m] < y) lo = m + 1; else hi = m; }
+      let l = lo - 1, r = lo; const idx = [];
+      while (idx.length < kn){ if (r >= n || (l >= 0 && y - sy[l] <= sy[r] - y)) idx.push(l--); else idx.push(r++); }
+      return idx;
+    }
+    const z = {
+      saa: () => zSAA,
+      fc: y => Math.max(0, fa + fb * y),
+      knn: y => quantile(window(y).map(i => sx[i]), t),
+      erm: y => Math.max(0, ea + eb * y),
+      oracle: y => Math.max(0, mean(y) + SD(y, s0) * normInv(t)),
+    };
+    // expected cost under the true conditional distribution at a given y (quantile grid, clipped at 0)
+    const J = 300, U = Array.from({length: J}, (_, j) => normInv((j + .5) / J));
+    const expCost = (zz, y) => { const m = mean(y), s = SD(y, s0); let c = 0; for (let j = 0; j < J; j++) c += loss(zz, Math.max(0, m + s * U[j]), t); return c / J; };
+    // test-set average
+    const rngT = mulberry32(S.seed * 7919 + 5), test = [];
+    for (let i = 0; i < 2500; i++){ const y = 8 + 30 * rngT(); test.push([y, Math.max(0, mean(y) + SD(y, s0) * randn(rngT))]); }
+    const keys = ['saa', 'fc', 'knn', 'erm', 'oracle'], avg = {};
+    keys.forEach(k => { let c = 0; for (const [y, x] of test) c += loss(z[k](y), x, t); avg[k] = c / test.length; });
+
+    // ---- scatter
+    const svg = $('#nvScatter'); svg.innerHTML = '';
+    const W = 520, H = 340, L = 44, R = 12, T = 12, B = 42, ymaxD = Math.max(120, ...xs) * 1.02;
+    const X = v => L + (v - 8) / 30 * (W - L - R), Y = v => H - B - v / ymaxD * (H - B - T);
+    niceTicks(0, ymaxD, 5).forEach(v => { if (v > ymaxD) return; el('line', {x1: L, x2: W - R, y1: Y(v), y2: Y(v), stroke: css('--line')}, svg); el('text', {x: L - 8, y: Y(v) + 4, 'text-anchor': 'end', 'font-size': 12, fill: css('--muted')}, svg, v); });
+    [10, 15, 20, 25, 30, 35].forEach(v => el('text', {x: X(v), y: H - B + 18, 'text-anchor': 'middle', 'font-size': 12, fill: css('--muted')}, svg, v));
+    el('text', {x: (L + W - R) / 2, y: H - 8, 'text-anchor': 'middle', 'font-size': 12.5, fill: css('--muted')}, svg, 'temperature y (°C)');
+    el('text', {x: 14, y: (T + H - B) / 2, 'text-anchor': 'middle', 'font-size': 12.5, fill: css('--muted'), transform: `rotate(-90 14 ${(T + H - B) / 2})`}, svg, 'demand x (tubs)');
+    const nb = new Set(window(y0).map(i => order[i]));
+    for (let i = 0; i < n; i++) el('circle', {cx: X(ys[i]), cy: Y(xs[i]), r: nb.has(i) ? 3.4 : 2.4, fill: nb.has(i) ? css('--orange') : css('--grey'), opacity: nb.has(i) ? .85 : .32}, svg);
+    el('line', {x1: X(y0), x2: X(y0), y1: T, y2: H - B, stroke: css('--ink'), 'stroke-dasharray': '4 4', opacity: .6}, svg);
+    const grid = Array.from({length: 61}, (_, i) => 8 + i * 0.5);
+    keys.forEach(k => {
+      const d = grid.map((y, i) => (i ? 'L' : 'M') + X(y).toFixed(1) + ',' + Y(z[k](y)).toFixed(1)).join('');
+      el('path', {d, fill: 'none', stroke: css(COLORS[k]), 'stroke-width': k === 'oracle' ? 1.8 : 2.4, 'stroke-dasharray': k === 'oracle' ? '5 4' : ''}, svg);
+    });
+    keys.forEach(k => { el('circle', {cx: X(y0), cy: Y(z[k](y0)), r: 5.5, fill: css(COLORS[k]), stroke: css('--card'), 'stroke-width': 1.5}, svg); });
+    $('#nvLegend').innerHTML = keys.map(k => `<span><i style="background:var(${COLORS[k]})"></i>${NAMES[k]}</span>`).join('') + '<span><i style="background:var(--orange);opacity:.8"></i>days used by the neighbour method today</span>';
+
+    // ---- expected cost today
+    const c = $('#nvCost'); c.innerHTML = '';
+    const W2 = 340, H2 = 340, L2 = 42, R2 = 12, T2 = 24, B2 = 42;
+    const zmax = Math.max(40, ...keys.map(k => z[k](y0))) * 1.25 + 10;
+    const zs = Array.from({length: 120}, (_, i) => i * zmax / 119);
+    const cs = zs.map(v => expCost(v, y0)), cmax = Math.max(...cs) * 1.05, cmin = Math.min(...cs);
+    const X2 = v => L2 + v / zmax * (W2 - L2 - R2), Y2 = v => H2 - B2 - v / cmax * (H2 - B2 - T2);
+    niceTicks(0, cmax, 4).forEach(v => { if (v > cmax) return; el('line', {x1: L2, x2: W2 - R2, y1: Y2(v), y2: Y2(v), stroke: css('--line')}, c); el('text', {x: L2 - 6, y: Y2(v) + 4, 'text-anchor': 'end', 'font-size': 12, fill: css('--muted')}, c, v.toFixed(v < 10 ? 1 : 0)); });
+    niceTicks(0, zmax, 5).forEach(v => { if (v > zmax) return; el('text', {x: X2(v), y: H2 - B2 + 18, 'text-anchor': 'middle', 'font-size': 12, fill: css('--muted')}, c, v); });
+    el('text', {x: (L2 + W2 - R2) / 2, y: H2 - 8, 'text-anchor': 'middle', 'font-size': 12.5, fill: css('--muted')}, c, 'tubs ordered today, z');
+    el('text', {x: L2, y: 14, 'font-size': 12.5, fill: css('--fg'), 'font-weight': 600}, c, 'expected cost of today’s order (true distribution)');
+    el('path', {d: zs.map((v, i) => (i ? 'L' : 'M') + X2(v).toFixed(1) + ',' + Y2(cs[i]).toFixed(1)).join(''), fill: 'none', stroke: css('--ink'), 'stroke-width': 2}, c);
+    keys.forEach((k, i) => {
+      const zz = z[k](y0), cc = expCost(zz, y0);
+      el('line', {x1: X2(zz), x2: X2(zz), y1: Y2(cc), y2: H2 - B2, stroke: css(COLORS[k]), 'stroke-dasharray': '2 3', opacity: .7}, c);
+      el('circle', {cx: X2(zz), cy: Y2(cc), r: 6, fill: css(COLORS[k]), stroke: css('--card'), 'stroke-width': 1.5}, c);
+    });
+
+    // ---- table
+    const best = avg.oracle;
+    $('#nvTable').innerHTML = '<tr><th>Method</th><th>Orders today</th><th>Expected cost today</th><th>Average cost over all days</th><th>Extra cost vs. best possible</th></tr>' +
+      keys.map(k => { const zz = z[k](y0); return `<tr><td class="k"><i style="display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:8px;background:var(${COLORS[k]})"></i>${NAMES[k]}</td><td class="mono">${zz.toFixed(1)}</td><td class="mono">${expCost(zz, y0).toFixed(2)}</td><td class="mono">${avg[k].toFixed(2)}</td><td class="mono">${k === 'oracle' ? '—' : '+' + ((avg[k] / best - 1) * 100).toFixed(1) + '%'}</td></tr>`; }).join('');
+  }
+  run();
+})();
+
+/* ======================================================================= 4: sketch */
+(function(){
+  const svg = $('#acSketch'); const rng = mulberry32(21);
+  const ink = css('--fg'), muted = css('--muted'), PW = 280, EGO = [140, 262], S0 = [236, 58], HDG = 215 * Math.PI / 180, LEN = 235, SEP = 30;
+  const dir = [Math.sin(HDG), -Math.cos(HDG)];                          // screen coordinates (y down)
+  const samples = Array.from({length: 40}, () => {
+    const bend = rng() < .6, tb = (.25 + .5 * rng()) * LEN, d1 = HDG + (bend ? randn(rng) * 21 * Math.PI / 180 : 0);
+    return {tb, dir1: [Math.sin(d1), -Math.cos(d1)]};
+  });
+  const at = (sm, t) => t <= sm.tb ? [S0[0] + dir[0] * t, S0[1] + dir[1] * t] : [S0[0] + dir[0] * sm.tb + sm.dir1[0] * (t - sm.tb), S0[1] + dir[1] * sm.tb + sm.dir1[1] * (t - sm.tb)];
+  const panel = (i, label) => {
+    el('rect', {x: 10 + i * 300, y: 8, width: PW, height: 294, rx: 12, fill: 'none', stroke: css('--line')}, svg);
+    el('text', {x: 10 + i * 300 + PW / 2, y: 30, 'text-anchor': 'middle', 'font-size': 13, 'font-weight': 700, fill: muted, 'letter-spacing': '.05em'}, svg, label);
+  };
+  const plane = (g, x, y, rot, color, sc) => { const e = el('g', {transform: `translate(${x} ${y}) rotate(${rot}) scale(${sc})`}, g); el('path', {d: 'M0,-12 L8,12 L0,7 L-8,12 Z', fill: color}, e); };
+  const heading = deg => deg;  // compass degrees, clockwise from north
+  const intruderRot = 215;
+  panel(0, 'OBSERVE  y'); panel(1, 'FUTURES  x | y'); panel(2, 'CHOOSE  z');
+
+  // panel 0: what we see
+  const g0 = el('g', {transform: 'translate(10 0)'}, svg);
+  plane(g0, 150, 150, intruderRot, css('--orange'), 1.5);
+  el('line', {x1: 150, y1: 150, x2: 150 + dir[0] * 60, y2: 150 + dir[1] * 60, stroke: css('--orange'), 'stroke-width': 2.5}, g0);
+  el('text', {x: 140, y: 238, 'text-anchor': 'middle', 'font-size': 13, fill: muted}, g0, 'its position and velocity');
+  el('text', {x: 140, y: 256, 'text-anchor': 'middle', 'font-size': 13, fill: muted}, g0, 'and how routes are built');
+  el('text', {x: 140, y: 282, 'text-anchor': 'middle', 'font-size': 12, fill: css('--blue'), 'font-weight': 600}, g0, 'no formula says where it goes');
+
+  const frame = (i, drawFan, rays) => {
+    const g = el('g', {transform: `translate(${10 + i * 300} 0)`}, svg);
+    el('circle', {cx: S0[0], cy: S0[1], r: SEP, fill: 'none', stroke: css('--orange'), 'stroke-dasharray': '3 3', 'stroke-width': 1.2, opacity: .8}, g);
+    el('text', {x: S0[0] + 8, y: S0[1] + SEP + 14, 'font-size': 11, fill: muted, 'text-anchor': 'middle'}, g, '5 NM');
+    if (drawFan) samples.forEach(sm => {
+      const pts = [0, sm.tb, LEN].map(t => at(sm, t));
+      el('polyline', {points: pts.map(q => q.join(',')).join(' '), fill: 'none', stroke: css('--orange'), 'stroke-width': 1.2, opacity: .35}, g);
+    });
+    el('line', {x1: S0[0], y1: S0[1], x2: S0[0] + dir[0] * LEN, y2: S0[1] + dir[1] * LEN, stroke: css('--orange'), 'stroke-width': 2}, g);
+    plane(g, S0[0], S0[1], intruderRot, css('--orange'), .9);
+    return g;
+  };
+  // panel 1: fan + straight-ahead ego (the conflict)
+  const g1 = frame(1, true);
+  el('line', {x1: EGO[0], y1: EGO[1], x2: EGO[0], y2: EGO[1] - 215, stroke: css('--ink'), 'stroke-width': 1.5, 'stroke-dasharray': '5 4', opacity: .6}, g1);
+  plane(g1, EGO[0], EGO[1], 0, css('--ink'), 1);
+  el('text', {x: 140, y: 296, 'text-anchor': 'middle', 'font-size': 12, fill: muted}, g1, 'most likely path (dark) and spread');
+  // panel 2: rays coloured by risk
+  const g2 = frame(2, true);
+  const rays = [-45, -30, -15, 0, 15, 30, 45], risk = rays.map(a => {
+    const r = a * Math.PI / 180, d = [Math.sin(r), -Math.cos(r)]; let hit = 0;
+    samples.forEach(sm => { for (let t = 0; t <= LEN; t += 4){ const q = at(sm, t); if (Math.hypot(q[0] - (EGO[0] + d[0] * t), q[1] - (EGO[1] + d[1] * t)) < SEP){ hit++; break; } } });
+    return hit / samples.length;
+  });
+  const col = p => p > .6 ? css('--red') : p > .15 ? css('--orange') : css('--green');
+  const J = risk.map((p, k) => p + .1 * Math.abs(rays[k]) / 45), best = J.indexOf(Math.min(...J));
+  rays.forEach((a, k) => { const r = a * Math.PI / 180;
+    el('line', {x1: EGO[0], y1: EGO[1], x2: EGO[0] + Math.sin(r) * 168, y2: EGO[1] - Math.cos(r) * 168, stroke: col(risk[k]), 'stroke-width': k === best ? 4.5 : 2.5, 'stroke-linecap': 'round', opacity: k === best ? 1 : .85}, g2);
+    el('text', {x: EGO[0] + Math.sin(r) * 184, y: EGO[1] - Math.cos(r) * 184 + 4, 'text-anchor': 'middle', 'font-size': 11, fill: muted}, g2, Math.round(risk[k] * 100) + '%'); });
+  plane(g2, EGO[0], EGO[1], 0, css('--ink'), 1);
+  el('text', {x: 140, y: 296, 'text-anchor': 'middle', 'font-size': 12, fill: css('--green'), 'font-weight': 600}, g2, 'pick low risk, small detour');
+})();
+
+/* ======================================================================= 5: study */
+(function(){
+  const d = DATA.study, pct = (a, i) => a[i] / a.reduce((p, q) => p + q, 0);
+  $('#stN').textContent = d.n_scenarios.toLocaleString(); $('#stR').textContent = d.n_routes.toLocaleString();
+  const e300 = d.err_by_horizon['300'], r = d.cv_rule;
+  const stats = [
+    [(d.share_bend * 100).toFixed(0) + '%', 'of routes bend at all (the rest are straight lines)'],
+    [d.bend_angle_deg.median.toFixed(0) + '°', 'median bend; 90% bend by less than ' + d.bend_angle_deg.p90.toFixed(0) + '°'],
+    [(r.recall * 100).toFixed(1) + '%', 'of real conflicts a straight-line check flags 5 min ahead'],
+    [(d.neutral_episode_with_intrusion * 100).toFixed(0) + '%', 'of episodes where flying straight to the goal loses separation'],
+  ];
+  $('#stStats').innerHTML = stats.map(s => `<div class="card stat"><b>${s[0]}</b><span>${s[1]}</span></div>`).join('');
+  const bars = (svg, items, opts) => {     // items: [{label, values:[{v,color,name}]}]
+    svg.innerHTML = '';
+    const W = +svg.viewBox.baseVal.width, H = +svg.viewBox.baseVal.height, L = 44, R = 10, T = 14, B = 40;
+    const ticks = niceTicks(0, opts.max, 4), top = ticks[ticks.length - 1];
+    const Y = v => H - B - v / top * (H - B - T);
+    ticks.forEach(v => { el('line', {x1: L, x2: W - R, y1: Y(v), y2: Y(v), stroke: css('--line')}, svg); el('text', {x: L - 6, y: Y(v) + 4, 'text-anchor': 'end', 'font-size': 11.5, fill: css('--muted')}, svg, opts.fmt(v)); });
+    const gw = (W - L - R) / items.length;
+    items.forEach((it, i) => {
+      const k = it.values.length, bw = Math.min(gw / (k + 1), 44), x0 = L + i * gw + (gw - bw * k) / 2;
+      it.values.forEach((v, j) => {
+        el('rect', {x: x0 + j * bw, y: Y(v.v), width: bw * .86, height: Math.max(H - B - Y(v.v), 1), fill: v.color, rx: 3}, svg);
+        el('text', {x: x0 + j * bw + bw * .43, y: Y(v.v) - 4, 'text-anchor': 'middle', 'font-size': 11.5, fill: css('--fg'), 'font-weight': 600}, svg, (opts.lab || opts.fmt)(v.v));
+      });
+      el('text', {x: L + i * gw + gw / 2, y: H - B + 17, 'text-anchor': 'middle', 'font-size': 12, fill: css('--muted')}, svg, it.label);
+    });
+    if (opts.xlabel) el('text', {x: (L + W - R) / 2, y: H - 5, 'text-anchor': 'middle', 'font-size': 12, fill: css('--muted')}, svg, opts.xlabel);
+  };
+  const hs = ['60', '120', '300', '600'];
+  bars($('#stErr'), hs.map(h => ({label: h + ' s', values: [
+      {v: d.err_by_horizon[h].bend.p90, color: css('--red')},
+      {v: d.err_by_horizon[h].bend.median, color: css('--orange')}]})),
+    {max: Math.max(...hs.map(h => d.err_by_horizon[h].bend.p90)), fmt: v => v.toFixed(v < 10 ? 1 : 0) + ' NM', lab: v => v.toFixed(1), xlabel: 'how far ahead we look   (red: 90th percentile, orange: median)'});
+  const th = d.threats_hist, thL = ['0', '1', '2', '3', '4+'];
+  bars($('#stThreat'), th.map((_, i) => ({label: thL[i], values: [{v: pct(th, i) * 100, color: css('--blue')}]})),
+    {max: 80, fmt: v => v.toFixed(v < 10 ? 1 : 0) + '%', xlabel: 'real threats at the same moment'});
+  const ba = d.bend_angle_hist, baL = ['<10', '10–20', '20–30', '30–45', '45–60', '60–90', '>90'];
+  bars($('#stBend'), ba.map((_, i) => ({label: baL[i] + '°', values: [{v: pct(ba, i) * 100, color: css('--purple')}]})),
+    {max: 45, fmt: v => v.toFixed(0) + '%', xlabel: 'bend angle (share of bending routes)'});
+  const nr = d.near30_hist.slice(0, 4).concat([d.near30_hist[4] + d.near30_hist[5]]), nrL = ['0', '1', '2', '3', '4+'];
+  bars($('#stNear'), nr.map((_, i) => ({label: nrL[i], values: [{v: pct(nr, i) * 100, color: css('--grey')}, {v: pct(th, i) * 100, color: css('--blue')}]})),
+    {max: 80, fmt: v => v.toFixed(0) + '%', lab: v => v.toFixed(0), xlabel: 'grey: within 30 NM   |   blue: real threats (next 5 min)'});
+  const le3 = (th[0] + th[1] + th[2] + th[3]) / th.reduce((a, b) => a + b, 0) * 100;
+  const p0 = pct(th, 0) * 100;
+  $('#stTake').innerHTML = `<b>What this says.</b>
+    <ul style="margin:6px 0 0;padding-left:20px">
+      <li><b>The uncertainty is real but mild.</b> Half the routes bend, but by a median of only ${d.bend_angle_deg.median.toFixed(0)}° and late (median ${d.bend_time_s.median.toFixed(0)} s after spawn). Looking 5 minutes ahead, a bending intruder is off by a median of ${e300.bend.median.toFixed(1)} NM (90th percentile ${e300.bend.p90.toFixed(1)} NM), comparable to the 5 NM separation limit.</li>
+      <li><b>A straight-line check already does most of the work:</b> it flags ${(r.recall * 100).toFixed(1)}% of upcoming conflicts and has ${((1 - r.precision) * 100).toFixed(1)}% false alarms. The ${((1 - r.recall) * 100).toFixed(1)}% it misses are the bends. This is why our closest-approach features helped, and why better <i>prediction</i> alone has limited headroom in the single-agent track.</li>
+      <li><b>Few intruders matter at once.</b> ${p0.toFixed(0)}% of moments have no real threat, and ${le3.toFixed(1)}% have three or fewer. But "within 30 NM" is a poor filter (on average ${d.mean_near30.toFixed(1)} intruders are that close). <b>Rank by closest approach, not by distance</b>, and keeping the top 3 to 4 covers almost everything.</li>
+    </ul>`;
+})();
+
+/* ======================================================================= 6: scaling demo */
+(function(){
+  const NH = 13, TS = 30, DT = 10, SEPN = 5, EGO_V = 150 / 1852;            // NM per second
+  const ANG = Array.from({length: NH}, (_, k) => -90 + 15 * k);              // heading offsets, degrees
+  const S = {seed: 5, topK: 0, timings: null};
+  const MAXN = 160;
+  let traffic = [];
+  function makeTraffic(seed){
+    const rng = mulberry32(seed * 131 + 9); traffic = [];
+    for (let i = 0; i < MAXN; i++){
+      const x = (rng() - .5) * 88, y = 6 + 44 * rng();
+      const toEgo = Math.atan2(-x, -y) * 180 / Math.PI;
+      // the first two are aimed at us, a quarter of the rest too, the others fly anywhere
+      const aimed = i < 2 || rng() < .25;
+      const hdg = aimed ? toEgo + randn(rng) * (i < 2 ? 8 : 22) : rng() * 360;
+      const px = i === 0 ? -9 + rng() * 6 : i === 1 ? 14 + rng() * 10 : x, py = i === 0 ? 30 + rng() * 6 : i === 1 ? 28 + rng() * 8 : y;
+      const th = Math.atan2(-px, -py) * 180 / Math.PI;
+      traffic.push({x: px, y: py, hdg: aimed && i < 2 ? th + randn(rng) * 8 : hdg, v: (120 + 60 * rng()) / 1852, z: Array.from({length: 4 * 400}, () => rng())});
+    }
+  }
+  // intruder future samples: M paths, each at TS time steps. returns Float32Array [M][TS][2]
+  function samplePaths(it, M, pBend, sigBend){
+    const out = new Float32Array(M * TS * 2), h0 = it.hdg * Math.PI / 180;
+    for (let m = 0; m < M; m++){
+      const u = it.z, o = 4 * m;
+      // deterministic pseudo-normal from stored uniforms (common random numbers)
+      const g = Math.sqrt(-2 * Math.log(Math.max(u[o + 1], 1e-9))) * Math.cos(2 * Math.PI * u[o + 2]);
+      const g2 = Math.sqrt(-2 * Math.log(Math.max(u[o + 3], 1e-9))) * Math.sin(2 * Math.PI * u[o + 2]);
+      const bends = u[o] < pBend, tb = (0.15 + 0.7 * ((u[o + 1] * 7.31) % 1)) * TS * DT, dth = g * sigBend * Math.PI / 180;
+      const vf = 1 + 0.05 * g2, h1 = h0 + (bends ? dth : 0);
+      for (let s = 0; s < TS; s++){
+        const t = (s + 1) * DT, v = it.v * vf;
+        let px, py;
+        if (!bends || t <= tb){ px = it.x + v * t * Math.sin(h0); py = it.y + v * t * Math.cos(h0); }
+        else { px = it.x + v * tb * Math.sin(h0) + v * (t - tb) * Math.sin(h1); py = it.y + v * tb * Math.cos(h0) + v * (t - tb) * Math.cos(h1); }
+        out[(m * TS + s) * 2] = px; out[(m * TS + s) * 2 + 1] = py;
+      }
+    }
+    return out;
+  }
+  const egoXY = ANG.map(a => { const r = a * Math.PI / 180; return [Math.sin(r), Math.cos(r)]; });
+  function riskFor(paths, M){            // returns Float32Array[NH]: P(min separation < 5 NM) per heading
+    const risk = new Float32Array(NH), lim = SEPN * SEPN;
+    for (let k = 0; k < NH; k++){
+      const ex = egoXY[k][0] * EGO_V, ey = egoXY[k][1] * EGO_V; let hit = 0;
+      for (let m = 0; m < M; m++){
+        for (let s = 0; s < TS; s++){
+          const t = (s + 1) * DT, dx = paths[(m * TS + s) * 2] - ex * t, dy = paths[(m * TS + s) * 2 + 1] - ey * t;
+          if (dx * dx + dy * dy < lim){ hit++; break; }
+        }
+      }
+      risk[k] = hit / M;
+    }
+    return risk;
+  }
+  function urgency(it){                // closest approach under a straight-line forecast, over the candidate headings
+    const h = it.hdg * Math.PI / 180, vx = it.v * Math.sin(h), vy = it.v * Math.cos(h); let best = 1e9;
+    for (let k = 0; k < NH; k++){
+      const rx = it.x, ry = it.y, wx = vx - egoXY[k][0] * EGO_V, wy = vy - egoXY[k][1] * EGO_V, w2 = wx * wx + wy * wy;
+      const t = w2 > 1e-12 ? clamp(-(rx * wx + ry * wy) / w2, 0, TS * DT) : 0;
+      best = Math.min(best, Math.hypot(rx + wx * t, ry + wy * t));
+    }
+    return best;
+  }
+  function profile(N, M, pBend, sigBend, topK){
+    let idx = Array.from({length: N}, (_, i) => i);
+    if (topK > 0 && topK < N) idx = idx.sort((a, b) => urgency(traffic[a]) - urgency(traffic[b])).slice(0, topK);
+    const per = {}, surv = new Float32Array(NH).fill(1);
+    for (const i of idx){
+      const r = riskFor(samplePaths(traffic[i], M, pBend, sigBend), M); per[i] = r;
+      for (let k = 0; k < NH; k++) surv[k] *= (1 - r[k]);
+    }
+    return {pAny: Array.from(surv, v => 1 - v), per, used: idx.length};
+  }
+  const color = p => p < .5 ? mix(css('--green'), css('--orange'), p / .5) : mix(css('--orange'), css('--red'), (p - .5) / .5);
+  function mix(a, b, t){ const pa = parse(a), pb = parse(b); return `rgb(${pa.map((v, i) => Math.round(v + (pb[i] - v) * t)).join(',')})`; }
+  function parse(c){ const m = c.replace('#', ''); return [parseInt(m.slice(0, 2), 16), parseInt(m.slice(2, 4), 16), parseInt(m.slice(4, 6), 16)]; }
+
+  const ids = ['scN', 'scM', 'scP', 'scB'];
+  ids.forEach(id => $('#' + id).oninput = draw);
+  tabs($('#scTop'), [{label: 'all', value: 0}, {label: '3', value: 3}, {label: '5', value: 5}, {label: '8', value: 8}], 0, v => { S.topK = v; draw(); });
+  $('#scNew').onclick = () => { S.seed++; makeTraffic(S.seed); S.timings = null; draw(); };
+  $('#scMeasure').onclick = () => { measure(); drawTime(); };
+
+  function timeOnce(N, M, p, b, K){ const t0 = performance.now(); profile(N, M, p, b, K); return performance.now() - t0; }
+  function median(a){ const s = [...a].sort((x, y) => x - y); return s[s.length >> 1]; }
+  function measure(){
+    const M = +$('#scM').value, p = +$('#scP').value, b = +$('#scB').value;
+    profile(40, M, p, b, S.topK); profile(10, M, p, b, S.topK);              // warm up the JIT before timing
+    const Ns = [1, 2, 5, 10, 20, 40, 80, 160];
+    S.timings = {M, K: S.topK, rows: Ns.map(N => ({N, ms: median([timeOnce(N, M, p, b, S.topK), timeOnce(N, M, p, b, S.topK), timeOnce(N, M, p, b, S.topK)])}))};
+  }
+  function drawTime(){
+    const svg = $('#scTime'); svg.innerHTML = '';
+    const W = 400, H = 190, L = 44, R = 10, T = 22, B = 36;
+    el('text', {x: L, y: 13, 'font-size': 12, 'font-weight': 600, fill: css('--fg')}, svg, 'time for one decision vs. number of intruders');
+    if (!S.timings){ el('text', {x: W / 2, y: H / 2, 'text-anchor': 'middle', 'font-size': 12.5, fill: css('--muted')}, svg, 'press “Measure timing vs. N”'); return; }
+    const rows = S.timings.rows, ymax = Math.max(...rows.map(r => r.ms)), ticks = niceTicks(0, ymax, 3), top = ticks[ticks.length - 1];
+    const X = n => L + n / 160 * (W - L - R), Y = v => H - B - v / top * (H - B - T);
+    ticks.forEach(v => { el('line', {x1: L, x2: W - R, y1: Y(v), y2: Y(v), stroke: css('--line')}, svg); el('text', {x: L - 6, y: Y(v) + 4, 'text-anchor': 'end', 'font-size': 11.5, fill: css('--muted')}, svg, v.toFixed(v < 10 ? 1 : 0) + ' ms'); });
+    rows.filter(r => r.N >= 20).forEach(r => el('text', {x: X(r.N), y: H - B + 16, 'text-anchor': 'middle', 'font-size': 11.5, fill: css('--muted')}, svg, r.N));
+    el('text', {x: (L + W - R) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': 11.5, fill: css('--muted')}, svg, 'number of intruders N');
+    el('path', {d: rows.map((r, i) => (i ? 'L' : 'M') + X(r.N) + ',' + Y(r.ms)).join(''), fill: 'none', stroke: css('--blue'), 'stroke-width': 2.4}, svg);
+    rows.forEach(r => el('circle', {cx: X(r.N), cy: Y(r.ms), r: 3.6, fill: css('--blue')}, svg));
+    el('text', {x: W - R, y: T + 8, 'text-anchor': 'end', 'font-size': 11.5, fill: css('--muted')}, svg, `M = ${S.timings.M}, ${S.timings.K ? 'top ' + S.timings.K + ' only' : 'all intruders'}`);
+  }
+  function draw(){
+    const N = +$('#scN').value, M = +$('#scM').value, p = +$('#scP').value, b = +$('#scB').value, K = S.topK;
+    $('#scNV').textContent = N; $('#scMV').textContent = M; $('#scPV').textContent = (p * 100).toFixed(0) + '%'; $('#scBV').textContent = b + '°';
+    timeOnce(N, M, p, b, K);
+    const times = [timeOnce(N, M, p, b, K), timeOnce(N, M, p, b, K), timeOnce(N, M, p, b, K)], ms = median(times);
+    const prof = profile(N, M, p, b, K), full = K > 0 && K < N ? profile(N, M, p, b, 0) : prof;
+    let err = 0; for (let k = 0; k < NH; k++) err = Math.max(err, Math.abs(prof.pAny[k] - full.pAny[k]));
+    // choose heading: low risk, small detour
+    const J = prof.pAny.map((r, k) => r + 0.12 * Math.abs(ANG[k]) / 90), kBest = J.indexOf(Math.min(...J));
+    // scene
+    const svg = $('#scScene'); svg.innerHTML = '';
+    [10, 20, 30, 40].forEach(r => { el('circle', {cx: 0, cy: 0, r, fill: 'none', stroke: css('--line'), 'stroke-width': .25}, svg); });
+    ANG.forEach((a, k) => { const r = a * Math.PI / 180, L = 24.3;
+      el('line', {x1: 0, y1: 0, x2: Math.sin(r) * L, y2: -Math.cos(r) * L, stroke: color(prof.pAny[k]), 'stroke-width': k === kBest ? 1.5 : .9, opacity: k === kBest ? 1 : .8}, svg); });
+    for (let i = 0; i < N; i++){
+      const it = traffic[i], used = prof.per[i] !== undefined, peak = used ? Math.max(...prof.per[i]) : 0, h = it.hdg * Math.PI / 180;
+      el('line', {x1: it.x, y1: -it.y, x2: it.x + Math.sin(h) * it.v * TS * DT, y2: -(it.y + Math.cos(h) * it.v * TS * DT), stroke: used ? color(peak) : css('--grey'), 'stroke-width': .35, 'stroke-dasharray': '1 .9', opacity: used ? .9 : .4}, svg);
+      const g = el('g', {transform: `translate(${it.x} ${-it.y}) rotate(${it.hdg})`}, svg);
+      el('path', {d: 'M0,-1.9 L1.3,1.6 L0,.9 L-1.3,1.6 Z', fill: used ? color(peak) : css('--grey'), opacity: used ? 1 : .5}, g);
+    }
+    el('path', {d: 'M0,-2.6 L1.9,2.4 L0,1.3 L-1.9,2.4 Z', fill: css('--ink')}, svg);
+    el('text', {x: 0, y: 10, 'text-anchor': 'middle', 'font-size': 2.6, fill: css('--muted')}, svg, 'our aircraft');
+    const rb = ANG[kBest] * Math.PI / 180;
+    const ar = el('g', {transform: `translate(${Math.sin(rb) * 24.3} ${-Math.cos(rb) * 24.3}) rotate(${ANG[kBest]})`}, svg); el('path', {d: 'M0,-2.6 L2,1 L-2,1 Z', fill: css('--ink')}, ar);
+    // output
+    const checks = prof.used * NH * M * TS, joint = N * Math.log10(M);
+    $('#scOut').innerHTML = `
+      <div class="row" style="gap:18px;margin-bottom:6px"><div><div class="sub" style="font-size:12.5px;margin:0">intruders used</div><b style="font-size:24px">${prof.used}</b><span style="color:var(--muted)"> of ${N}</span></div>
+        <div><div class="sub" style="font-size:12.5px;margin:0">time for this decision</div><b style="font-size:24px">${ms.toFixed(1)} ms</b></div></div>
+      <div style="color:var(--muted);font-size:13.5px">${prof.used} intruders &times; ${NH} headings &times; ${M} samples &times; up to ${TS} steps = <b style="color:var(--fg)">${checks.toLocaleString()}</b> distance checks. Enumerating every joint future would need about <b style="color:var(--fg)">10<sup>${joint.toFixed(0)}</sup></b> cases.</div>
+      <div style="margin-top:8px">Chosen heading: <b>${ANG[kBest] === 0 ? 'straight ahead' : Math.abs(ANG[kBest]) + '° ' + (ANG[kBest] > 0 ? 'right' : 'left')}</b> (chance of any conflict <b>${(prof.pAny[kBest] * 100).toFixed(0)}%</b>; going straight: <b>${(prof.pAny[6] * 100).toFixed(0)}%</b>).</div>
+      ${K > 0 && K < N ? `<div style="margin-top:6px;color:var(--muted);font-size:13.5px">Using only the top ${K}: largest difference from using all ${N} is <b style="color:var(--fg)">${(err * 100).toFixed(1)} percentage points</b> of conflict probability.</div>` : ''}`;
+    // bars
+    const bs = $('#scBars'); bs.innerHTML = '';
+    const W = 860, H = 190, L = 44, Rr = 10, T = 12, B = 44, bw = (W - L - Rr) / NH;
+    [0, .5, 1].forEach(v => { const y = H - B - v * (H - B - T); el('line', {x1: L, x2: W - Rr, y1: y, y2: y, stroke: css('--line')}, bs); el('text', {x: L - 6, y: y + 4, 'text-anchor': 'end', 'font-size': 11.5, fill: css('--muted')}, bs, (v * 100) + '%'); });
+    ANG.forEach((a, k) => {
+      const h = prof.pAny[k] * (H - B - T);
+      el('rect', {x: L + k * bw + bw * .12, y: H - B - h, width: bw * .76, height: Math.max(h, 1), fill: color(prof.pAny[k]), rx: 3, stroke: k === kBest ? css('--ink') : 'none', 'stroke-width': 2}, bs);
+      el('text', {x: L + k * bw + bw / 2, y: H - B + 16, 'text-anchor': 'middle', 'font-size': 11.5, fill: css('--muted')}, bs, a === 0 ? '0°' : (a > 0 ? '+' : '') + a + '°');
+    });
+    el('text', {x: (L + W - Rr) / 2, y: H - 6, 'text-anchor': 'middle', 'font-size': 12, fill: css('--muted')}, bs, 'candidate heading (− = left of our nose, + = right)   →   chance of any loss of separation within 5 minutes');
+    drawTime();
+  }
+  makeTraffic(S.seed); measure(); draw();
+})();
+</script>
+</body>
+</html>

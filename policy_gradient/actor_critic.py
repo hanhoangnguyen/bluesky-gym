@@ -13,6 +13,10 @@ x(s) is the concatenation of several tile-coded groups (each group has n_tilings
     goal      (distance to goal, goal bearing)                                      always
     obstacle  (clearance, bearing)  and  (goal bearing, bearing, clearance)         stage >= 2
     intruder  (distance, bearing, aspect)                                           stage >= 3
+    speed     (own airspeed, time to closest approach, signed miss distance)        speed=True
+With ``speed=True`` the policy has a second Gaussian head for the speed action (same critic, same TD error).
+With ``gate=(tcpa_max_s, dcpa_max_nm)`` an intruder that will not come that close in that time is treated
+as absent by every intruder feature.
 All angles are relative to the aircraft's own heading, so what is learned is the same everywhere in
 the sector.
 """
@@ -56,8 +60,9 @@ class Features:
 
     FAR_NM = 60.0     # "no obstacle / intruder nearby" is encoded as a far-away one
 
-    def __init__(self, stage, n_tilings=8, cpa=False):
+    def __init__(self, stage, n_tilings=8, cpa=False, speed=False, gate=None):
         pi = math.pi
+        self.gate = gate
         self.coders = [(self._goal, TileCoder((0, -pi), (160, pi), (16, 12), (False, True), n_tilings))]
         if stage >= 2:
             self.coders.append((self._obstacle, TileCoder((-5, -pi), (50, pi), (11, 12), (False, True), n_tilings)))
@@ -70,6 +75,9 @@ class Features:
                 self.coders.append((self._cpa, TileCoder((0, -15), (400, 15), (10, 15), (False, False), n_tilings)))
                 self.coders.append((self._cpa_joint, TileCoder((0, -15, -pi), (400, 15, pi), (8, 10, 8),
                                                                (False, False, True), n_tilings)))
+        if speed:     # appended after everything else, so earlier checkpoints still fill the front
+            self.coders.append((self._speed, TileCoder((60, 0, -15), (180, 400, 15), (6, 8, 10),
+                                                       (False, False, False), n_tilings)))
         sizes = [c.size for _, c in self.coders]
         self.offsets = np.concatenate(([0], np.cumsum(sizes)[:-1]))
         self.size = int(sum(sizes))
@@ -87,13 +95,25 @@ class Features:
         clearance, bearing = s.obstacle if s.obstacle else (self.FAR_NM, 0.0)
         return (s.goal_bearing, bearing, clearance)
 
-    def _intruder(self, s):
-        return s.intruder[:3] if s.intruder else (self.FAR_NM + 20, 0.0, math.pi)
+    def _threat(self, s):
+        """The intruder, or None if there is none or (with a gate) it will not come close soon enough."""
+        if not s.intruder:
+            return None
+        if self.gate and (s.intruder[3] > self.gate[0] or abs(s.intruder[4]) > self.gate[1]):
+            return None
+        return s.intruder
 
-    @staticmethod
-    def _cpa(s):
+    def _intruder(self, s):
+        t = self._threat(s)
+        return t[:3] if t else (self.FAR_NM + 20, 0.0, math.pi)
+
+    def _cpa(self, s):
         """(time to closest approach, signed miss distance): the quantities a conflict is decided by."""
-        return s.intruder[3:5] if s.intruder else (400.0, 15.0)
+        t = self._threat(s)
+        return t[3:5] if t else (400.0, 15.0)
+
+    def _speed(self, s):
+        return (s.speed_ms, *self._cpa(s))
 
     def _cpa_joint(self, s):
         tcpa, dcpa = self._cpa(s)
@@ -106,17 +126,21 @@ class Features:
 
 class ActorCritic:
     def __init__(self, env, stage, gamma=1.0, alpha_w=0.3, alpha_mu=0.3, alpha_sigma=0.02,
-                 sigma_init=0.5, sigma_min=0.05, n_tilings=8, seed=None, n_eval=20, cpa=False):
-        self.env, self.stage = env, stage
+                 sigma_init=0.5, sigma_min=0.05, n_tilings=8, seed=None, n_eval=20, cpa=False,
+                 speed=False, gate=None):
+        self.env, self.stage, self.speed = env, stage, speed
         self.gamma, self.alpha_w, self.alpha_mu, self.alpha_sigma = gamma, alpha_w, alpha_mu, alpha_sigma
         self.log_sigma_min, self.log_sigma_max = math.log(sigma_min), math.log(1.0)
         self.rng = random.Random(seed)
 
-        self.features = Features(stage, n_tilings, cpa)
+        self.features = Features(stage, n_tilings, cpa, speed, gate)
         n = self.features.size
         self.w = np.zeros(n)                                                    # v(s) = 0
         self.theta_mu = np.zeros(n)                                             # mu(s) = 0: keep heading
         self.theta_sigma = np.full(n, math.log(sigma_init) / self.features.n_active)
+        if speed:                                                               # second head: speed change
+            self.theta_mu_s = np.zeros(n)                                       # mu_s = 0: hold speed
+            self.theta_sigma_s = np.full(n, math.log(sigma_init) / self.features.n_active)
 
         self.history, self.snapshots = [], {}
         gen = StageGenerator(stage, fixed_prob=0.0, scale=env.scale)
@@ -124,14 +148,21 @@ class ActorCritic:
         self.eval_scenarios = [gen.generate(eval_rng) for _ in range(n_eval)]   # fixed, comparable evaluations
 
     # ----- policy ------------------------------------------------------------------------
-    def mu_sigma(self, idx):
-        mu = self.theta_mu[idx].sum()
-        log_sigma = min(max(self.theta_sigma[idx].sum(), self.log_sigma_min), self.log_sigma_max)
+    def mu_sigma(self, idx, speed_head=False):
+        theta_mu, theta_sigma = ((self.theta_mu_s, self.theta_sigma_s) if speed_head
+                                 else (self.theta_mu, self.theta_sigma))
+        mu = theta_mu[idx].sum()
+        log_sigma = min(max(theta_sigma[idx].sum(), self.log_sigma_min), self.log_sigma_max)
         return mu, math.exp(log_sigma)
 
     def act(self, state, greedy=False):
-        mu, sigma = self.mu_sigma(self.features.indices(state))
-        return mu if greedy else self.rng.gauss(mu, sigma)
+        idx = self.features.indices(state)
+        mu, sigma = self.mu_sigma(idx)
+        a = mu if greedy else self.rng.gauss(mu, sigma)
+        if not self.speed:
+            return a
+        mu_s, sigma_s = self.mu_sigma(idx, speed_head=True)
+        return a, (mu_s if greedy else self.rng.gauss(mu_s, sigma_s))
 
     def rollout(self, scenario, greedy=True, record=None):
         """One episode with the current policy. Returns the final `info` dict (the scored metrics).
@@ -150,7 +181,9 @@ class ActorCritic:
         """Greedy drives on the canonical layout and on the fixed set of random scenarios."""
         rec = []
         canon = self.rollout("canonical", record=rec)
-        infos = [self.rollout(sc) for sc in self.eval_scenarios]
+        recs = [[] for _ in self.eval_scenarios]
+        infos = [self.rollout(sc, record=r) for sc, r in zip(self.eval_scenarios, recs)]
+        speeds = [st.speed_ms for r in recs for st, _ in r]
         reached = [i for i in infos if i["waypoint_reached"]]
         n = len(infos)
         # sigma along the canonical drive (how much the policy still explores)
@@ -163,14 +196,20 @@ class ActorCritic:
             intrusion=sum(i["intrusion_events"] > 0 for i in infos) / n,
             sector_exit=sum(i["sector_exit_events"] > 0 for i in infos) / n,
             mean_time=sum(i["flight_time"] for i in reached) / len(reached) if reached else float("nan"),
+            mean_speed=sum(speeds) / max(len(speeds), 1),
             sigma=sigma)
 
     # ----- parameters ----------------------------------------------------------------------
     def get_params(self):
-        return dict(w=self.w.copy(), theta_mu=self.theta_mu.copy(), theta_sigma=self.theta_sigma.copy())
+        p = dict(w=self.w.copy(), theta_mu=self.theta_mu.copy(), theta_sigma=self.theta_sigma.copy())
+        if self.speed:
+            p.update(theta_mu_s=self.theta_mu_s.copy(), theta_sigma_s=self.theta_sigma_s.copy())
+        return p
 
     def set_params(self, p):
         self.w[:], self.theta_mu[:], self.theta_sigma[:] = p["w"], p["theta_mu"], p["theta_sigma"]
+        if self.speed and "theta_mu_s" in p:
+            self.theta_mu_s[:], self.theta_sigma_s[:] = p["theta_mu_s"], p["theta_sigma_s"]
 
     @staticmethod
     def _push(theta, idx, step, total, low, high):
@@ -197,7 +236,12 @@ class ActorCritic:
             while not (terminal or truncated):                        # loop for each step
                 mu, sigma = self.mu_sigma(idx)
                 a = self.rng.gauss(mu, sigma)                         # A ~ pi(.|S, theta)
-                state, R, terminal, truncated, _ = env.step(a)        # take A, observe S', R
+                if self.speed:
+                    mu_s, sigma_s = self.mu_sigma(idx, speed_head=True)
+                    a_s = self.rng.gauss(mu_s, sigma_s)
+                    state, R, terminal, truncated, _ = env.step((a, a_s))
+                else:
+                    state, R, terminal, truncated, _ = env.step(a)    # take A, observe S', R
                 idx_next = self.features.indices(state)
 
                 v = w[idx].sum()
@@ -213,6 +257,14 @@ class ActorCritic:
                 self._push(self.theta_mu, idx, self.alpha_mu / n * I * delta * z * sigma, mu, -limit, limit)
                 self._push(self.theta_sigma, idx, self.alpha_sigma / n * I * delta * (z * z - 1),
                            self.theta_sigma[idx].sum(), self.log_sigma_min, self.log_sigma_max)
+
+                if self.speed:                                        # same update for the speed head
+                    z_s = (a_s - mu_s) / sigma_s
+                    limit_s = 1.0 + 2 * sigma_s
+                    self._push(self.theta_mu_s, idx, self.alpha_mu / n * I * delta * z_s * sigma_s, mu_s,
+                               -limit_s, limit_s)
+                    self._push(self.theta_sigma_s, idx, self.alpha_sigma / n * I * delta * (z_s * z_s - 1),
+                               self.theta_sigma_s[idx].sum(), self.log_sigma_min, self.log_sigma_max)
 
                 I *= gamma
                 idx = idx_next
@@ -230,7 +282,7 @@ class ActorCritic:
                     print(f"ep {episode:6d} | train ret {result['train_return']:6.2f} | eval: "
                           f"goal {result['success']:4.0%}, restricted {result['restricted']:4.0%}, "
                           f"intrusion {result['intrusion']:4.0%}, exit {result['sector_exit']:4.0%}, "
-                          f"time {result['mean_time']:5.0f}s | canonical: "
+                          f"time {result['mean_time']:5.0f}s, speed {result['mean_speed']:5.1f} | canonical: "
                           f"{'goal' if result['canon_reached'] else 'MISS'} {result['canon_time']:.0f}s "
                           f"restr {result['canon_restricted']} intr {result['canon_intrusions']} | "
                           f"sigma {result['sigma']:.2f}", flush=True)

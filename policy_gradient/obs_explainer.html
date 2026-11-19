@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What the policy sees: the 131 observation numbers</title>
+<style>
+:root{
+  --bg:#fbfaf7; --fg:#1f2328; --muted:#5d6670; --card:#ffffff; --line:#e3e1db; --soft:#f2f0ea;
+  --blue:#0072B2; --orange:#E69F00; --green:#009E73; --red:#D55E00; --purple:#CC79A7; --sky:#56B4E9; --grey:#6b7280;
+  --shadow:0 1px 2px rgba(0,0,0,.05),0 4px 14px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#14161a; --fg:#e7e9ec; --muted:#9aa4ae; --card:#1c1f24; --line:#2c3036; --soft:#23272d; --shadow:0 1px 2px rgba(0,0,0,.4); }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+header.hero{padding:40px 0 10px}
+.eyebrow{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+h1{font-size:clamp(28px,4.4vw,40px);line-height:1.12;margin:8px 0 12px;letter-spacing:-.02em}
+.lead{font-size:18px;color:var(--muted);max-width:820px;margin:0 0 8px}
+h2{font-size:24px;letter-spacing:-.01em;margin:34px 0 6px}
+h3{font-size:16px;margin:0 0 6px}
+p{margin:.4em 0 .9em}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9em}
+code{background:var(--soft);padding:1px 6px;border-radius:5px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g5{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media(max-width:860px){.g2{grid-template-columns:1fr}.g5{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tally{cursor:pointer;text-align:left;font:inherit;color:inherit;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:10px 12px;box-shadow:var(--shadow)}
+.tally b{display:block;font-size:26px;letter-spacing:-.02em;line-height:1.1}
+.tally span{font-size:13px;color:var(--muted)}
+.tally[aria-pressed=true]{outline:2px solid var(--purple);outline-offset:-1px}
+.sum{font-size:14px;color:var(--muted);margin:8px 2px 0}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;background:var(--soft);color:var(--muted)}
+.viewhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:0 2px 6px}
+.viewhead b{font-size:14px}
+.viewhead span{font-size:12.5px;color:var(--muted)}
+svg{display:block;width:100%;height:auto;touch-action:none}
+svg text{font-family:inherit}
+.scene{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.ctl{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 18px;margin-top:12px}
+@media(max-width:860px){.ctl{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.ctl label{font-size:13px;color:var(--muted);display:block}
+.ctl input[type=range]{width:100%}
+.ctl .v{font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--fg);float:right}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+button.btn{border:1px solid var(--line);background:var(--card);color:var(--fg);font:inherit;font-size:13.5px;padding:5px 12px;border-radius:9px;cursor:pointer}
+button.btn:hover{background:var(--soft)}
+label.chk{font-size:13.5px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.tabs{display:inline-flex;background:var(--soft);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
+.tabs button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:13.5px;padding:6px 12px;border-radius:8px;cursor:pointer}
+.tabs button[aria-pressed=true]{background:var(--card);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.12);font-weight:600}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px}
+.chips button{border:1px solid var(--line);background:var(--card);color:var(--muted);font:inherit;font-size:12.5px;padding:3px 10px;border-radius:999px;cursor:pointer}
+.chips button[aria-pressed=true]{background:var(--soft);color:var(--fg);border-color:var(--purple);font-weight:600}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
+td.k{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;white-space:nowrap}
+td.n{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;text-align:right;white-space:nowrap}
+tr.hov:hover td{background:var(--soft)}
+.bar{width:90px;height:8px;border-radius:4px;background:var(--soft);position:relative}
+.bar i{position:absolute;top:0;bottom:0;border-radius:4px;background:var(--blue)}
+.bar u{position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--grey)}
+.note{font-size:13.5px;color:var(--muted);border-left:3px solid var(--line);padding-left:12px;margin:10px 0}
+.callout{background:color-mix(in srgb,var(--orange) 14%,var(--card));border:1px solid color-mix(in srgb,var(--orange) 40%,var(--line));border-radius:12px;padding:12px 16px;font-size:15px}
+.info{background:var(--soft);border-radius:10px;padding:10px 12px;font-size:14px;margin:10px 0}
+.leg{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
+.leg i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+ul.tight{margin:.2em 0 .6em;padding-left:1.2em}
+ul.tight li{margin:.35em 0}
+footer{padding:30px 0 60px;color:var(--muted);font-size:13.5px}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <div class="eyebrow">BlueSky-Gym competition &middot; observation, action, reward</div>
+  <h1>What the policy sees: the 131 numbers</h1>
+  <p class="lead">Drag the aircraft, the goal, the obstacles and the intruders around the map. The left view is the world (north up). The right view is what the policy actually gets: everything rotated so your nose points up. The table shows the exact numbers the environment would hand over. Click a group or hover a row to see which geometry it is.</p>
+</div></header>
+
+<main class="wrap">
+  <div class="grid g5" id="tallies"></div>
+  <p class="sum">1 goal slot &times; 3 + 1 airspeed + 10 intruder slots &times; 7 + 5 obstacle slots &times; 4 + 12 sector points &times; 3 + 1 inside-sector flag = <b>131</b>. Slots that have nothing to show are filled with zeros.</p>
+
+  <div class="grid g2" style="margin-top:14px">
+    <div>
+      <div class="viewhead"><b>World view</b><span>north up &middot; drag anything &middot; units: NM</span></div>
+      <div class="scene"><svg id="world" viewBox="0 0 460 460" role="img" aria-label="World view"></svg></div>
+    </div>
+    <div>
+      <div class="viewhead"><b>Your view (body frame)</b><span>nose up &middot; right wing to the right</span></div>
+      <div class="scene"><svg id="body" viewBox="0 0 460 460" role="img" aria-label="Body frame view"></svg></div>
+    </div>
+  </div>
+  <div class="leg">
+    <span><i style="background:var(--blue)"></i>you</span>
+    <span><i style="background:var(--green)"></i>goal</span>
+    <span><i style="background:var(--orange)"></i>intruders (arrow = their heading)</span>
+    <span><i style="background:var(--red)"></i>obstacle polygon, dashed = enclosing circle the policy sees</span>
+    <span><i style="background:var(--purple)"></i>highlighted quantity</span>
+  </div>
+
+  <div class="ctl">
+    <div><label>Your heading <span class="v" id="v_hdg"></span></label><input id="s_hdg" type="range" min="0" max="359" step="1"></div>
+    <div><label>Your airspeed <span class="v" id="v_tas"></span></label><input id="s_tas" type="range" min="120" max="180" step="1"></div>
+    <div><label>Selected intruder heading <span class="v" id="v_ihdg"></span></label><input id="s_ihdg" type="range" min="0" max="359" step="1"></div>
+    <div><label>Selected intruder speed <span class="v" id="v_itas"></span></label><input id="s_itas" type="range" min="120" max="180" step="1"></div>
+  </div>
+  <div class="row">
+    <button class="btn" id="b_add">Add intruder</button>
+    <button class="btn" id="b_rem">Remove last intruder</button>
+    <button class="btn" id="b_reset">Reset scene</button>
+    <label class="chk"><input type="checkbox" id="c_circ" checked> show enclosing circle</label>
+    <label class="chk"><input type="checkbox" id="c_bub" checked> show 5 NM separation bubble</label>
+    <span class="pill" id="p_n"></span>
+  </div>
+
+  <h2>The numbers</h2>
+  <div class="tabs" id="tabs"></div>
+  <div class="card" style="margin-top:12px" id="panel"></div>
+
+  <h2>The action: what you send back</h2>
+  <div class="card">
+    <p style="margin-top:0">Two numbers in [-1, 1]. Both are <b>relative to what you are doing now</b>, and the command is held for one decision interval (10 simulated seconds).</p>
+    <div class="ctl" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+      <div><label>action[0] heading <span class="v" id="v_ah"></span></label><input id="s_ah" type="range" min="-1" max="1" step="0.05" value="0.5"></div>
+      <div><label>action[1] speed <span class="v" id="v_as"></span></label><input id="s_as" type="range" min="-1" max="1" step="0.05" value="0"></div>
+    </div>
+    <div class="info" id="actinfo"></div>
+    <p class="note" style="margin-bottom:0">The dashed purple arrow on both maps is the heading you would command. The aircraft does not jump to it: it turns toward it over the next several seconds. Speed is already part of the action space. Our policy-gradient testbed sends <code>np.array([a, 0.0])</code>, so it never changes speed.</p>
+  </div>
+
+  <h2>Things that are easy to get wrong</h2>
+  <div class="card"><ul class="tight">
+    <li><b>Two sign conventions.</b> Goal, obstacle and sector bearings use <code>heading &minus; bearing</code>, so a positive <code>sin</code> means the target is on your <b>left</b>. Intruder <code>y_r</code> is positive on your <b>right</b>. And a positive heading action turns <b>right</b>. (Our testbed uses &ldquo;positive = right&rdquo; everywhere.)</li>
+    <li><b><code>cos_track</code> / <code>sin_track</code> is not the intruder's compass heading.</b> It is the direction of the <i>relative</i> velocity (intruder minus you), measured from your nose. Look at the arrow in the right-hand view.</li>
+    <li><b>Slots are re-sorted by distance every step.</b> Slot 0 is whoever is closest right now, so the same aircraft moves between slots. Nearest is not the same as most dangerous: pick the intruder in the &ldquo;intruders&rdquo; tab and check its closest-approach box.</li>
+    <li><b>Closest approach (TCPA, DCPA) is not in the observation.</b> The code can use it as a sorting key, but by default the sort is by distance, and the numbers themselves are never handed over. The network has to infer them from position and relative velocity.</li>
+    <li><b>Obstacles are a centroid plus an enclosing radius.</b> The true shape is a polygon (scored exactly), so the dashed circle is often much bigger than the red shape.</li>
+    <li><b>No absolute position or heading</b> appears anywhere. Your own heading only enters through the drift angle to the goal. Other aircraft's speed only enters through relative velocity.</li>
+    <li><b>Padding looks like an object at distance 0.</b> Unused slots are all zeros, which is also what an object exactly on top of you would give.</li>
+  </ul></div>
+
+  <h2>Where the numbers come from</h2>
+  <p class="note">Formulas, units and normalisers are ported from <code>core/observations.py</code> and <code>core/actions.py</code>, with the settings <code>CompetitionEnv</code> uses (<code>distance_norm=170</code> km, intruder positions in metres &divide; 10<sup>6</sup>, velocities &divide; 150 m/s, intruder distance NM &divide; 250, obstacle radius &divide; 17.84 NM, airspeed (m/s &minus; 150) &divide; 20). The scene itself is made up: real scenarios have 5 obstacles, 10 intruders on routes, a sector of 15,000&ndash;23,000 NM&sup2; and a start-to-goal distance of 100&ndash;170 km. The observation code on this page was checked against the real <code>CompetitionEnv</code> on 30 states from 6 seeds (3,930 values compared, largest difference 2&times;10<sup>&minus;15</sup>).</p>
+</main>
+<footer><div class="wrap">Generated for the han_dev testbed &middot; no external libraries &middot; works offline.</div></footer>
+
+<script>
+/*CORE_START*/
+const D2R = Math.PI / 180;
+const RADN = Math.sqrt(1000 / Math.PI);
+const w180 = a => ((((a + 180) % 360) + 360) % 360) - 180;
+function polar(from, to) {                     // aviation bearing (deg, clockwise from north) and distance (NM)
+  const dx = to.x - from.x, dy = to.y - from.y;
+  return { brg: Math.atan2(dx, dy) / D2R, dist: Math.hypot(dx, dy) };
+}
+function obsGeom(poly) {                       // centroid = mean of vertices, radius = farthest vertex (as in the env)
+  const cx = poly.reduce((s, p) => s + p[0], 0) / poly.length, cy = poly.reduce((s, p) => s + p[1], 0) / poly.length;
+  return { x: cx, y: cy, r: Math.max(...poly.map(p => Math.hypot(p[0] - cx, p[1] - cy))) };
+}
+function resample(poly, n) {                   // n points evenly spaced by arc length, starting at vertex 0
+  const ring = poly.concat([poly[0]]), seg = [];
+  let L = 0;
+  for (let i = 0; i < ring.length - 1; i++) { const d = Math.hypot(ring[i+1][0]-ring[i][0], ring[i+1][1]-ring[i][1]); seg.push(d); L += d; }
+  const out = [];
+  for (let k = 0; k < n; k++) {
+    let t = (k / n) * L, i = 0;
+    while (i < seg.length - 1 && t > seg[i]) { t -= seg[i]; i++; }
+    const f = seg[i] ? t / seg[i] : 0;
+    out.push({ x: ring[i][0] + f * (ring[i+1][0] - ring[i][0]), y: ring[i][1] + f * (ring[i+1][1] - ring[i][1]) });
+  }
+  return out;
+}
+// S: {ego:{x,y,hdg,tas}, goal:{x,y}, intr:[{x,y,hdg,tas}], obstacles:[{x,y,r}], sectorPts:[{x,y}], inside:bool}
+function computeObs(S) {
+  const e = S.ego, h = e.hdg * D2R;
+  const g = polar(e, S.goal), dg = w180(e.hdg - g.brg) * D2R;
+  const out = { cos_drift: [Math.cos(dg)], sin_drift: [Math.sin(dg)], waypoint_distance: [g.dist * 1.852 / 170], airspeed: [(e.tas - 150) / 20] };
+  const ik = ['x_r','y_r','vx_r','vy_r','cos_track','sin_track','intruder_distance'];
+  ik.forEach(k => out[k] = new Array(10).fill(0));
+  const vn0 = Math.cos(h) * e.tas, ve0 = Math.sin(h) * e.tas;
+  const iorder = S.intr.map((t, i) => ({ i, d: polar(e, t).dist })).sort((a, b) => a.d - b.d).slice(0, 10).map(o => o.i);
+  iorder.forEach((i, slot) => {
+    const t = S.intr[i], p = polar(e, t), dm = p.dist * 1852, rel = (p.brg - e.hdg) * D2R, th = t.hdg * D2R;
+    const vnr = Math.cos(th) * t.tas - vn0, ver = Math.sin(th) * t.tas - ve0;
+    const vx = vnr * Math.cos(h) + ver * Math.sin(h), vy = -vnr * Math.sin(h) + ver * Math.cos(h);
+    const tr = Math.atan2(vy, vx);
+    out.x_r[slot] = dm * Math.cos(rel) / 1e6; out.y_r[slot] = dm * Math.sin(rel) / 1e6;
+    out.vx_r[slot] = vx / 150; out.vy_r[slot] = vy / 150;
+    out.cos_track[slot] = Math.cos(tr); out.sin_track[slot] = Math.sin(tr);
+    out.intruder_distance[slot] = p.dist / 250;
+  });
+  ['obstacle_distance','obstacle_cos_bearing','obstacle_sin_bearing','obstacle_radius'].forEach(k => out[k] = new Array(5).fill(0));
+  const oorder = S.obstacles.map((o, i) => ({ i, d: polar(e, o).dist })).sort((a, b) => a.d - b.d).slice(0, 5).map(o => o.i);
+  oorder.forEach((i, slot) => {
+    const o = S.obstacles[i], p = polar(e, o), b = w180(e.hdg - p.brg) * D2R;
+    out.obstacle_distance[slot] = p.dist * 1.852 / 170; out.obstacle_cos_bearing[slot] = Math.cos(b);
+    out.obstacle_sin_bearing[slot] = Math.sin(b); out.obstacle_radius[slot] = o.r / RADN;
+  });
+  ['sector_point_distance','sector_point_cos_bearing','sector_point_sin_bearing'].forEach(k => out[k] = new Array(12).fill(0));
+  S.sectorPts.slice(0, 12).forEach((q, i) => {
+    const p = polar(e, q), b = w180(e.hdg - p.brg) * D2R;
+    out.sector_point_distance[i] = p.dist * 1.852 / 170; out.sector_point_cos_bearing[i] = Math.cos(b); out.sector_point_sin_bearing[i] = Math.sin(b);
+  });
+  out.inside_sector = [S.inside ? 1 : 0];
+  out._iorder = iorder; out._oorder = oorder;
+  return out;
+}
+/*CORE_END*/
+
+/* ------------------------------------------------------------------ scene */
+const SECTOR = [[-85,-20],[-55,70],[30,85],[90,30],[75,-60],[-10,-88]];
+const OBST = [
+  [[-8,-4],[14,-12],[27,2],[20,20],[0,22],[-12,10]],
+  [[-62,28],[-40,24],[-34,38],[-48,50],[-60,44]]
+];
+function freshScene() {
+  return {
+    ego: { x: -35, y: -30, hdg: 40, tas: 150 },
+    goal: { x: 35, y: 28 },
+    obs: OBST.map(p => p.map(v => v.slice())),
+    intr: [ { x: 12, y: -34, hdg: 340, tas: 150 }, { x: -34, y: 44, hdg: 105, tas: 140 }, { x: 60, y: -6, hdg: 262, tas: 165 } ],
+    sel: 0
+  };
+}
+let S = freshScene();
+let group = 'goal', slotSel = 0, hoverKey = null, hoverIdx = null;
+let act = { h: 0.5, s: 0 };
+const GROUPS = [
+  { id: 'goal', name: 'Goal', count: '3', sub: 'drift + distance' },
+  { id: 'speed', name: 'Airspeed', count: '1', sub: 'own only' },
+  { id: 'intr', name: 'Intruders', count: '10 × 7', sub: '= 70' },
+  { id: 'obs', name: 'Obstacles', count: '5 × 4', sub: '= 20' },
+  { id: 'sec', name: 'Sector', count: '12 × 3 + 1', sub: '= 37' }
+];
+
+function pointInPoly(pt, poly) {
+  let c = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [xi, yi] = poly[i], [xj, yj] = poly[j];
+    if ((yi > pt.y) !== (yj > pt.y) && pt.x < (xj - xi) * (pt.y - yi) / (yj - yi) + xi) c = !c;
+  }
+  return c;
+}
+function stateForObs() {
+  return { ego: S.ego, goal: S.goal, intr: S.intr, obstacles: S.obs.map(obsGeom),
+           sectorPts: resample(SECTOR, 12), inside: pointInPoly(S.ego, SECTOR) };
+}
+
+/* ------------------------------------------------------------------ geometry helpers */
+const K = 2.0, C = 230;
+function views() {
+  const h = S.ego.hdg * D2R, e = S.ego;
+  const world = { pt: (x, y) => [C + x * K, C - y * K], dir: a => [Math.sin(a * D2R), -Math.cos(a * D2R)], rot: 0 };
+  const body = {
+    pt: (x, y) => { const dx = x - e.x, dy = y - e.y; const xr = dy * Math.cos(h) + dx * Math.sin(h), yr = -dy * Math.sin(h) + dx * Math.cos(h); return [C + yr * K, C - xr * K]; },
+    dir: a => { const r = (a - e.hdg) * D2R; return [Math.sin(r), -Math.cos(r)]; }, rot: e.hdg
+  };
+  return { world, body };
+}
+const f = n => n.toFixed(1);
+const poly = pts => pts.map(p => f(p[0]) + ',' + f(p[1])).join(' ');
+function arrow(x, y, dx, dy, len, cls, w) {
+  const x2 = x + dx * len, y2 = y + dy * len, a = Math.atan2(dy, dx), s = 6;
+  const hx1 = x2 - s * Math.cos(a - 0.45), hy1 = y2 - s * Math.sin(a - 0.45), hx2 = x2 - s * Math.cos(a + 0.45), hy2 = y2 - s * Math.sin(a + 0.45);
+  return `<g class="${cls}"><line x1="${f(x)}" y1="${f(y)}" x2="${f(x2)}" y2="${f(y2)}" stroke-width="${w || 2}"/><polygon points="${f(x2)},${f(y2)} ${f(hx1)},${f(hy1)} ${f(hx2)},${f(hy2)}"/></g>`;
+}
+function tri(x, y, rotDeg, cls, size) {
+  const s = size || 9;
+  return `<polygon class="${cls}" points="0,${-s*1.4} ${s*0.8},${s} 0,${s*0.5} ${-s*0.8},${s}" transform="translate(${f(x)},${f(y)}) rotate(${f(rotDeg)})"/>`;
+}
+function wedge(cx, cy, a1, a2, r, view) {       // angle wedge between two aviation headings as seen in this view
+  const d1 = view.dir(a1), d2 = view.dir(a2), delta = w180(a2 - a1);
+  const p1 = [cx + d1[0] * r, cy + d1[1] * r], p2 = [cx + d2[0] * r, cy + d2[1] * r];
+  return `<path d="M${f(cx)},${f(cy)} L${f(p1[0])},${f(p1[1])} A${r},${r} 0 0 ${delta > 0 ? 1 : 0} ${f(p2[0])},${f(p2[1])} Z" class="wedge"/>`;
+}
+function label(x, y, t, cls, anchor) { return `<text x="${f(x)}" y="${f(y)}" class="${cls || 'tl'}" text-anchor="${anchor || 'middle'}">${t}</text>`; }
+
+/* ------------------------------------------------------------------ rendering */
+function render() {
+  const V = views(), O = computeObs(stateForObs()), e = S.ego;
+  const SO = stateForObs();
+  const iorder = O._iorder, oorder = O._oorder;
+  const slotOfIntr = {}; iorder.forEach((i, s) => slotOfIntr[i] = s);
+  const slotOfObs = {}; oorder.forEach((i, s) => slotOfObs[i] = s);
+  document.getElementById('p_n').textContent = `${S.intr.length} intruder${S.intr.length === 1 ? '' : 's'} on the map · ${Math.max(0, 10 - S.intr.length)} slots padded`;
+
+  ['world', 'body'].forEach(name => {
+    const v = V[name], svg = document.getElementById(name);
+    let s = '';
+    // grid rings around ego
+    const ep = v.pt(e.x, e.y);
+    // sector
+    s += `<polygon class="sector" points="${poly(SECTOR.map(p => v.pt(p[0], p[1])))}"/>`;
+    SO.sectorPts.forEach((q, i) => {
+      const p = v.pt(q.x, q.y), hl = group === 'sec' && (hoverIdx === i || hoverIdx === null);
+      s += `<circle class="${hl ? 'secpt hl' : 'secpt'}" cx="${f(p[0])}" cy="${f(p[1])}" r="${hl ? 3.4 : 2.4}"/>`;
+      if (group === 'sec') s += label(p[0], p[1] - 6, i, 'tl small');
+    });
+    // obstacles
+    S.obs.forEach((pl, oi) => {
+      const g = SO.obstacles[oi], cp = v.pt(g.x, g.y), hlo = group === 'obs' && (slotOfObs[oi] === slotSel);
+      s += `<polygon class="${hlo ? 'obst hl' : 'obst'}" points="${poly(pl.map(p => v.pt(p[0], p[1])))}" data-drag="o${oi}"/>`;
+      if (document.getElementById('c_circ').checked) s += `<circle class="circ${hlo ? ' hl' : ''}" cx="${f(cp[0])}" cy="${f(cp[1])}" r="${f(g.r * K)}"/>`;
+      s += `<circle class="cdot" cx="${f(cp[0])}" cy="${f(cp[1])}" r="2.5"/>`;
+      if (group === 'obs' && slotOfObs[oi] !== undefined) s += label(cp[0], cp[1] + 4, 'slot ' + slotOfObs[oi], 'tl small', 'middle');
+      if (hlo) {
+        s += `<line class="hlline" x1="${f(ep[0])}" y1="${f(ep[1])}" x2="${f(cp[0])}" y2="${f(cp[1])}"/>`;
+        const pr = polar(e, g); s += wedge(ep[0], ep[1], e.hdg, pr.brg, 50, v);
+      }
+    });
+    // goal
+    const gp = v.pt(S.goal.x, S.goal.y);
+    s += `<g data-drag="goal"><circle class="goalr" cx="${f(gp[0])}" cy="${f(gp[1])}" r="9"/><circle class="goal" cx="${f(gp[0])}" cy="${f(gp[1])}" r="4"/></g>`;
+    if (group === 'goal') {
+      s += `<line class="hlline" x1="${f(ep[0])}" y1="${f(ep[1])}" x2="${f(gp[0])}" y2="${f(gp[1])}"/>`;
+      const pr = polar(e, S.goal); s += wedge(ep[0], ep[1], e.hdg, pr.brg, 56, v);
+      s += label((ep[0] + gp[0]) / 2, (ep[1] + gp[1]) / 2 - 6, f(pr.dist) + ' NM', 'tl hlt');
+    }
+    // sector rays when sector group
+    if (group === 'sec') {
+      SO.sectorPts.forEach((q, i) => { if (hoverIdx === i) { const p = v.pt(q.x, q.y); s += `<line class="hlline" x1="${f(ep[0])}" y1="${f(ep[1])}" x2="${f(p[0])}" y2="${f(p[1])}"/>`; s += wedge(ep[0], ep[1], e.hdg, polar(e, q).brg, 50, v); } });
+    }
+    // separation bubbles
+    const showBub = document.getElementById('c_bub').checked;
+    // intruders
+    S.intr.forEach((t, i) => {
+      const p = v.pt(t.x, t.y), sel = i === S.sel, slot = slotOfIntr[i];
+      const hli = group === 'intr' && slot === slotSel;
+      const d = v.dir(t.hdg);
+      s += `<g data-drag="i${i}">`;
+      if (showBub) s += `<circle class="bub" cx="${f(p[0])}" cy="${f(p[1])}" r="${f(5 * K)}"/>`;
+      s += tri(p[0], p[1], Math.atan2(d[0], -d[1]) / D2R, 'intr' + (hli ? ' hl' : '') + (sel ? ' sel' : ''), 8);
+      s += `</g>`;
+      s += arrow(p[0], p[1], d[0], d[1], 20 + (t.tas - 120) / 3, 'ivel', 1.6);
+      s += label(p[0] + 11, p[1] - 8, (slot !== undefined && slot < 10) ? 'I' + (i + 1) + (group === 'intr' ? ' · slot ' + slot : '') : 'I' + (i + 1) + ' (no slot)', 'tl small', 'start');
+    });
+    // intruder overlays
+    if (group === 'intr') {
+      const i = iorder[slotSel];
+      if (i !== undefined) {
+        const t = S.intr[i], p = v.pt(t.x, t.y);
+        s += `<line class="hlline" x1="${f(ep[0])}" y1="${f(ep[1])}" x2="${f(p[0])}" y2="${f(p[1])}"/>`;
+        if (name === 'body') {
+          const corner = [ep[0] + (p[0] - ep[0]), ep[1]];      // go sideways (y_r) then ahead (x_r)
+          s += `<polyline class="legs" points="${f(ep[0])},${f(ep[1])} ${f(p[0])},${f(ep[1])} ${f(p[0])},${f(p[1])}"/>`;
+          s += label((ep[0] + p[0]) / 2, ep[1] + 14, 'y_r', 'tl hlt');
+          s += label(p[0] + 4, (ep[1] + p[1]) / 2, 'x_r', 'tl hlt', 'start');
+          // relative velocity
+          const th = t.hdg * D2R, h = e.hdg * D2R;
+          const vnr = Math.cos(th) * t.tas - Math.cos(h) * e.tas, ver = Math.sin(th) * t.tas - Math.sin(h) * e.tas;
+          const vx = vnr * Math.cos(h) + ver * Math.sin(h), vy = -vnr * Math.sin(h) + ver * Math.cos(h);
+          const sp = Math.hypot(vx, vy);
+          if (sp > 1e-6) {
+            const ux = vy / sp, uy = -vx / sp;              // screen unit vector of relative velocity
+            s += `<line class="relline" x1="${f(p[0] - ux * 400)}" y1="${f(p[1] - uy * 400)}" x2="${f(p[0] + ux * 400)}" y2="${f(p[1] + uy * 400)}"/>`;
+            s += arrow(p[0], p[1], ux, uy, 64, 'rvel', 2.6);
+            s += label(p[0] + ux * 70, p[1] + uy * 70 + (uy > 0 ? 10 : -4), 'relative motion', 'tl hlt small');
+            // closest approach of that straight line
+            const px = (p[0] - ep[0]) / K, py = -(p[1] - ep[1]) / K;       // position in body frame (y_r right, x_r ahead) as (y, x)
+            const rx = py, ry = px;                                         // (x_r, y_r) NM
+            const tc = -(rx * vx + ry * vy) / (sp * sp);                    // NM per (m/s)
+            if (tc > 0) {
+              const cx = rx + tc * vx, cy = ry + tc * vy;
+              s += `<circle class="cpa" cx="${f(C + cy * K)}" cy="${f(C - cx * K)}" r="4.5"/>`;
+              s += `<line class="cpal" x1="${f(ep[0])}" y1="${f(ep[1])}" x2="${f(C + cy * K)}" y2="${f(C - cx * K)}"/>`;
+            }
+          }
+        } else {
+          const d = v.dir(t.hdg);
+          s += label((ep[0] + p[0]) / 2, (ep[1] + p[1]) / 2 - 6, f(polar(e, t).dist) + ' NM', 'tl hlt');
+        }
+      }
+    }
+    // action preview
+    const ah = e.hdg + act.h * 45, da = v.dir(ah);
+    s += `<line class="actl" x1="${f(ep[0])}" y1="${f(ep[1])}" x2="${f(ep[0] + da[0] * 78)}" y2="${f(ep[1] + da[1] * 78)}"/>`;
+    // ego
+    const dEgo = v.dir(e.hdg);
+    s += `<g data-drag="ego">`;
+    if (showBub) s += `<circle class="bub ego" cx="${f(ep[0])}" cy="${f(ep[1])}" r="${f(5 * K)}"/>`;
+    s += tri(ep[0], ep[1], Math.atan2(dEgo[0], -dEgo[1]) / D2R, 'ego', 10) + `</g>`;
+    s += arrow(ep[0], ep[1], dEgo[0], dEgo[1], 34, 'evel', 2);
+    if (group === 'speed') s += label(ep[0], ep[1] + 24, f(e.tas) + ' m/s', 'tl hlt');
+    // frame labels
+    if (name === 'world') { s += label(22, 22, 'N', 'tl big'); s += `<line x1="22" y1="30" x2="22" y2="50" class="north"/>`; }
+    else { s += label(C, 20, 'ahead', 'tl small'); s += label(436, C + 4, 'right', 'tl small', 'end'); s += label(24, C + 4, 'left', 'tl small', 'start'); }
+    svg.innerHTML = s;
+  });
+  document.getElementById('c_circ').onchange = render;
+  renderPanel(O, SO);
+  renderControls();
+}
+
+/* ------------------------------------------------------------------ panel */
+function bar(v, lo, hi) {
+  const a = Math.max(lo, Math.min(hi, v)), span = hi - lo, z = (0 - lo) / span;
+  const l = Math.min(z, (a - lo) / span) * 100, w = Math.abs((a - lo) / span - z) * 100;
+  return `<div class="bar"><u></u><i style="left:${l}%;width:${w}%"></i></div>`;
+}
+const fm = (n, d = 3) => (n >= 0 ? '+' : '−') + Math.abs(n).toFixed(d);
+function row(key, val, lo, hi, raw, plain, idx) {
+  return `<tr class="hov" data-idx="${idx === undefined ? '' : idx}"><td class="k">${key}</td><td class="n">${fm(val)}</td><td>${bar(val, lo, hi)}</td><td class="n">${raw}</td><td>${plain}</td></tr>`;
+}
+function head() { return '<table><tr><th>name</th><th style="text-align:right">value</th><th></th><th style="text-align:right">raw</th><th>in plain words</th></tr>'; }
+const side = (s, l, r) => Math.abs(s) < 0.03 ? '' : (s > 0 ? l : r);
+
+function renderPanel(O, SO) {
+  const e = S.ego, p = document.getElementById('panel');
+  let h = '';
+  if (group === 'goal') {
+    const g = polar(e, S.goal), dr = w180(e.hdg - g.brg);
+    h += `<h3>Goal: drift angle and distance</h3><p>Drift is <code>heading − bearing to goal</code>, wrapped to ±180°, then split into cosine and sine so there is no jump at ±180°. The distance is divided by 170 km.</p>` + head();
+    h += row('cos_drift', O.cos_drift[0], -1, 1, f(dr) + '°', Math.abs(dr) < 90 ? 'goal is in front half' : 'goal is behind you');
+    h += row('sin_drift', O.sin_drift[0], -1, 1, '', Math.abs(O.sin_drift[0]) < 0.03 ? 'dead ahead or dead behind' : (O.sin_drift[0] > 0 ? 'goal is on your <b>LEFT</b>' : 'goal is on your <b>RIGHT</b>'));
+    h += row('waypoint_distance', O.waypoint_distance[0], 0, 1.2, f(g.dist * 1.852) + ' km', f(g.dist) + ' NM to go');
+    h += '</table>';
+  } else if (group === 'speed') {
+    h += `<h3>Airspeed: your own only</h3><p><code>(true airspeed − 150 m/s) ÷ 20</code>. So 0 means 150 m/s (the default cruise) and +1 means 170 m/s. There is no heading or position of your own anywhere in the observation.</p>` + head();
+    h += row('airspeed', O.airspeed[0], -2, 2, f(e.tas) + ' m/s', f(e.tas * 1.94384) + ' kt');
+    h += '</table>';
+  } else if (group === 'intr') {
+    h += `<h3>Intruders: 10 slots, sorted by distance</h3><p>Seven numbers per slot, in your body frame (nose = ahead). Positions are metres ÷ 10<sup>6</sup>, velocities are <i>relative to you</i> ÷ 150 m/s.</p>`;
+    h += '<div class="chips">' + Array.from({ length: Math.max(S.intr.length, 1) }, (_, s) => `<button data-slot="${s}" aria-pressed="${s === slotSel}">slot ${s}${iorderLabel(O, s)}</button>`).join('') + '</div>';
+    const i = O._iorder[slotSel];
+    if (i === undefined) { h += `<div class="info">This slot is empty, so all seven numbers are zero.</div>`; }
+    else {
+      const t = S.intr[i], pp = polar(e, t), rel = (pp.brg - e.hdg) * D2R, xr = pp.dist * Math.cos(rel), yr = pp.dist * Math.sin(rel);
+      const th = t.hdg * D2R, hh = e.hdg * D2R;
+      const vnr = Math.cos(th) * t.tas - Math.cos(hh) * e.tas, ver = Math.sin(th) * t.tas - Math.sin(hh) * e.tas;
+      const vx = vnr * Math.cos(hh) + ver * Math.sin(hh), vy = -vnr * Math.sin(hh) + ver * Math.cos(hh);
+      const trk = Math.atan2(vy, vx) / D2R;
+      h += head();
+      h += row('x_r', O.x_r[slotSel], -0.3, 0.3, f(xr) + ' NM', xr >= 0 ? 'ahead of you' : 'behind you');
+      h += row('y_r', O.y_r[slotSel], -0.3, 0.3, f(yr) + ' NM', Math.abs(yr) < 0.5 ? 'straight ahead/behind' : (yr > 0 ? 'on your <b>RIGHT</b>' : 'on your <b>LEFT</b>'));
+      h += row('vx_r', O.vx_r[slotSel], -3, 3, f(vx) + ' m/s', vx >= 0 ? 'pulling away along your nose' : 'closing along your nose');
+      h += row('vy_r', O.vy_r[slotSel], -3, 3, f(vy) + ' m/s', Math.abs(vy) < 1 ? 'no sideways drift' : (vy > 0 ? 'drifting to your right' : 'drifting to your left'));
+      h += row('cos_track', O.cos_track[slotSel], -1, 1, f(trk) + '°', 'direction of <i>relative</i> motion, from your nose');
+      h += row('sin_track', O.sin_track[slotSel], -1, 1, '', trk > 0 ? 'relative motion heads to the right' : 'relative motion heads to the left');
+      h += row('intruder_distance', O.intruder_distance[slotSel], 0, 1, f(pp.dist) + ' NM', f(pp.dist) + ' NM ÷ 250');
+      h += '</table>';
+      // closest approach box (derived, not observed)
+      const px = xr * 1852, py = yr * 1852, sp2 = vx * vx + vy * vy;
+      let cp = '';
+      if (sp2 < 1e-6) cp = 'No relative motion.';
+      else {
+        const tc = -(px * vx + py * vy) / sp2;
+        if (tc < 0) cp = 'The two aircraft are already moving apart, so there is no future closest approach (the environment code returns “infinity” here).';
+        else {
+          const dc = Math.hypot(px + tc * vx, py + tc * vy) / 1852;
+          cp = `If nobody changes course: closest approach in <b>${Math.round(tc)} s</b> at <b>${dc.toFixed(1)} NM</b>. ` + (dc < 5 ? '<b style="color:var(--red)">That is inside 5 NM, an intrusion.</b>' : 'That is outside the 5 NM minimum.');
+        }
+      }
+      h += `<div class="info"><b>Not in the observation:</b> ${cp} The purple dot in the right-hand view marks that closest point on the relative-motion line. The network has to work this out from the seven numbers above.</div>`;
+    }
+  } else if (group === 'obs') {
+    h += `<h3>Obstacles: 5 slots, sorted by distance to the centroid</h3><p>Four numbers per slot: distance to the centroid (÷ 170 km), cosine and sine of the bearing (same left-positive convention as the goal), and the enclosing radius ÷ 17.84 NM.</p>`;
+    h += '<div class="chips">' + Array.from({ length: Math.max(S.obs.length, 1) }, (_, s) => `<button data-slot="${s}" aria-pressed="${s === slotSel}">slot ${s}</button>`).join('') + '</div>';
+    const i = O._oorder[slotSel];
+    if (i === undefined) h += `<div class="info">Empty slot: all four numbers are zero.</div>`;
+    else {
+      const g = SO.obstacles[i], pp = polar(e, g), br = w180(e.hdg - pp.brg);
+      h += head();
+      h += row('obstacle_distance', O.obstacle_distance[slotSel], 0, 1.2, f(pp.dist * 1.852) + ' km', 'to the <b>centroid</b>, not the edge');
+      h += row('obstacle_cos_bearing', O.obstacle_cos_bearing[slotSel], -1, 1, f(br) + '°', Math.abs(br) < 90 ? 'in front half' : 'behind you');
+      h += row('obstacle_sin_bearing', O.obstacle_sin_bearing[slotSel], -1, 1, '', Math.abs(O.obstacle_sin_bearing[slotSel]) < 0.03 ? 'dead ahead or behind' : (O.obstacle_sin_bearing[slotSel] > 0 ? 'on your <b>LEFT</b>' : 'on your <b>RIGHT</b>'));
+      h += row('obstacle_radius', O.obstacle_radius[slotSel], 0, 2, f(g.r) + ' NM', 'enclosing circle, farthest vertex from the centroid');
+      h += '</table>';
+      const edge = pp.dist - g.r;
+      h += `<div class="info">Distance to the circle's edge would be ${f(edge)} NM, but the policy only sees centroid distance and radius separately. ${edge < 0 ? 'You are inside the enclosing circle, which does not necessarily mean you are inside the polygon.' : ''}</div>`;
+    }
+  } else {
+    h += `<h3>Sector boundary: 12 points and an inside flag</h3><p>The sector outline is resampled to 12 points evenly spaced along its perimeter (starting at the first vertex), and each point is given as distance (÷ 170 km) and bearing (cos, sin, left-positive). The points stay in perimeter order, so the shape is presented the same way every step. Hover a row to see its point.</p>`;
+    h += '<table><tr><th>pt</th><th style="text-align:right">distance</th><th style="text-align:right">cos</th><th style="text-align:right">sin</th><th>raw</th></tr>';
+    SO.sectorPts.forEach((q, i) => {
+      const pp = polar(e, q);
+      h += `<tr class="hov" data-idx="${i}"><td class="k">${i}</td><td class="n">${fm(O.sector_point_distance[i])}</td><td class="n">${fm(O.sector_point_cos_bearing[i])}</td><td class="n">${fm(O.sector_point_sin_bearing[i])}</td><td class="n">${f(pp.dist)} NM</td></tr>`;
+    });
+    h += `</table><table style="margin-top:8px"><tr><td class="k">inside_sector</td><td class="n">${O.inside_sector[0]}</td><td>${O.inside_sector[0] ? 'you are inside the sector' : '<b style="color:var(--red)">you are outside the sector</b>'}</td></tr></table>`;
+  }
+  p.innerHTML = h;
+  p.querySelectorAll('[data-slot]').forEach(b => b.onclick = () => { slotSel = +b.dataset.slot; render(); });
+  p.querySelectorAll('tr.hov').forEach(r => {
+    r.onmouseenter = () => { if (r.dataset.idx !== '') { hoverIdx = +r.dataset.idx; render(); } };
+    r.onmouseleave = () => { if (hoverIdx !== null) { hoverIdx = null; render(); } };
+  });
+}
+function iorderLabel(O, s) { const i = O._iorder[s]; return i === undefined ? ' (empty)' : ` (I${i + 1})`; }
+
+/* ------------------------------------------------------------------ controls */
+function renderControls() {
+  const e = S.ego, t = S.intr[S.sel];
+  document.getElementById('s_hdg').value = Math.round(((e.hdg % 360) + 360) % 360);
+  document.getElementById('v_hdg').textContent = Math.round(((e.hdg % 360) + 360) % 360) + '°';
+  document.getElementById('s_tas').value = e.tas; document.getElementById('v_tas').textContent = Math.round(e.tas) + ' m/s';
+  const has = !!t;
+  ['s_ihdg', 's_itas'].forEach(id => document.getElementById(id).disabled = !has);
+  if (has) {
+    document.getElementById('s_ihdg').value = Math.round(((t.hdg % 360) + 360) % 360); document.getElementById('v_ihdg').textContent = 'I' + (S.sel + 1) + ' · ' + Math.round(((t.hdg % 360) + 360) % 360) + '°';
+    document.getElementById('s_itas').value = t.tas; document.getElementById('v_itas').textContent = 'I' + (S.sel + 1) + ' · ' + Math.round(t.tas) + ' m/s';
+  } else { document.getElementById('v_ihdg').textContent = '–'; document.getElementById('v_itas').textContent = '–'; }
+  document.getElementById('v_ah').textContent = fm(act.h, 2) + '  → ' + fm(act.h * 45, 1) + '°';
+  document.getElementById('v_as').textContent = fm(act.s, 2) + '  → ' + fm(act.s * 20 / 3, 2) + ' kt';
+  const nh = ((e.hdg + act.h * 45) % 360 + 360) % 360, nk = e.tas * 1.94384 + act.s * 20 / 3;
+  document.getElementById('actinfo').innerHTML = `Heading command: current heading ${Math.round(e.hdg)}° + ${fm(act.h, 2)} × 45° = <b>${Math.round(nh)}°</b> (${act.h > 0.02 ? 'a right turn' : act.h < -0.02 ? 'a left turn' : 'no turn'}).<br>Speed command: current ${f(e.tas * 1.94384)} kt + ${fm(act.s, 2)} × 6.67 kt = <b>${f(nk)} kt</b>. At most 6.67 kt (about 3.4 m/s) per decision, so even ten full-speed decisions in a row (100 s) change speed by about 67 kt.`;
+}
+
+/* ------------------------------------------------------------------ wiring */
+function buildTallies() {
+  const el = document.getElementById('tallies');
+  el.innerHTML = GROUPS.map(g => `<button class="tally" data-g="${g.id}" aria-pressed="${g.id === group}"><b>${g.count}</b><span>${g.name} ${g.sub}</span></button>`).join('');
+  document.getElementById('tabs').innerHTML = GROUPS.map(g => `<button data-g="${g.id}" aria-pressed="${g.id === group}">${g.name}</button>`).join('');
+  document.querySelectorAll('[data-g]').forEach(b => b.onclick = () => { group = b.dataset.g; slotSel = 0; hoverIdx = null; buildTallies(); render(); });
+}
+document.getElementById('s_hdg').oninput = ev => { S.ego.hdg = +ev.target.value; render(); };
+document.getElementById('s_tas').oninput = ev => { S.ego.tas = +ev.target.value; render(); };
+document.getElementById('s_ihdg').oninput = ev => { if (S.intr[S.sel]) { S.intr[S.sel].hdg = +ev.target.value; render(); } };
+document.getElementById('s_itas').oninput = ev => { if (S.intr[S.sel]) { S.intr[S.sel].tas = +ev.target.value; render(); } };
+document.getElementById('s_ah').oninput = ev => { act.h = +ev.target.value; render(); };
+document.getElementById('s_as').oninput = ev => { act.s = +ev.target.value; render(); };
+document.getElementById('c_bub').onchange = render;
+document.getElementById('b_reset').onclick = () => { S = freshScene(); slotSel = 0; render(); };
+document.getElementById('b_add').onclick = () => {
+  if (S.intr.length >= 10) return;
+  const a = Math.random() * 2 * Math.PI, r = 30 + Math.random() * 50;
+  S.intr.push({ x: Math.max(-95, Math.min(95, S.ego.x + r * Math.sin(a))), y: Math.max(-95, Math.min(95, S.ego.y + r * Math.cos(a))), hdg: Math.round(Math.random() * 359), tas: 120 + Math.round(Math.random() * 60) });
+  S.sel = S.intr.length - 1; render();
+};
+document.getElementById('b_rem').onclick = () => { if (S.intr.length) { S.intr.pop(); S.sel = Math.min(S.sel, S.intr.length - 1); render(); } };
+
+let drag = null;
+['world', 'body'].forEach(name => {
+  const svg = document.getElementById(name);
+  const toWorld = ev => {
+    const pt = svg.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY;
+    const q = pt.matrixTransform(svg.getScreenCTM().inverse());
+    if (name === 'world') return { x: (q.x - C) / K, y: (C - q.y) / K };
+    const yr = (q.x - C) / K, xr = (C - q.y) / K, h = S.ego.hdg * D2R;   // invert the body-frame rotation
+    return { x: S.ego.x + xr * Math.sin(h) + yr * Math.cos(h), y: S.ego.y + xr * Math.cos(h) - yr * Math.sin(h) };
+  };
+  svg.addEventListener('pointerdown', ev => {
+    const tgt = ev.target.closest('[data-drag]'); if (!tgt) return;
+    const id = tgt.dataset.drag, w = toWorld(ev);
+    drag = { id, name, w0: w, snap: JSON.parse(JSON.stringify(S)) };
+    if (id[0] === 'i') { S.sel = +id.slice(1); }
+    try { svg.setPointerCapture(ev.pointerId); } catch (e) {}
+    ev.preventDefault();
+  });
+  svg.addEventListener('pointermove', ev => {
+    if (!drag || drag.name !== name) return;
+    const w = toWorld(ev);
+    if (drag.id === 'ego') { S.ego.x = w.x; S.ego.y = w.y; }
+    else if (drag.id === 'goal') { S.goal.x = w.x; S.goal.y = w.y; }
+    else if (drag.id[0] === 'i') { const i = +drag.id.slice(1); S.intr[i].x = w.x; S.intr[i].y = w.y; }
+    else if (drag.id[0] === 'o') { const i = +drag.id.slice(1), dx = w.x - drag.w0.x, dy = w.y - drag.w0.y; S.obs[i] = drag.snap.obs[i].map(p => [p[0] + dx, p[1] + dy]); }
+    if (drag.name === 'body') { /* the body view rotates with the ego: moving the ego there is not supported */ if (drag.id === 'ego') { S.ego.x = drag.snap.ego.x; S.ego.y = drag.snap.ego.y; } }
+    render();
+  });
+  const end = () => { drag = null; };
+  svg.addEventListener('pointerup', end); svg.addEventListener('pointercancel', end);
+});
+
+const style = document.createElement('style');
+style.textContent = `
+.sector{fill:var(--soft);stroke:var(--grey);stroke-width:1.2;stroke-dasharray:5 4;opacity:.9}
+.secpt{fill:var(--grey)} .secpt.hl{fill:var(--purple)}
+.obst{fill:color-mix(in srgb,var(--red) 38%,transparent);stroke:var(--red);stroke-width:1.5;cursor:grab} .obst.hl{stroke:var(--purple);stroke-width:2.6}
+.circ{fill:none;stroke:var(--red);stroke-width:1.2;stroke-dasharray:4 4;opacity:.75} .circ.hl{stroke:var(--purple);opacity:1}
+.cdot{fill:var(--red)}
+.goal{fill:var(--green)} .goalr{fill:color-mix(in srgb,var(--green) 22%,transparent);stroke:var(--green);cursor:grab}
+.ego{fill:var(--blue);stroke:var(--card);stroke-width:1.5;cursor:grab}
+.intr{fill:var(--orange);stroke:var(--card);stroke-width:1.5;cursor:grab} .intr.sel{stroke:var(--fg);stroke-width:1.8} .intr.hl{fill:var(--purple)}
+.bub{fill:none;stroke:var(--orange);stroke-width:1;stroke-dasharray:2 3;opacity:.7} .bub.ego{stroke:var(--blue)}
+.evel line{stroke:var(--blue)} .evel polygon{fill:var(--blue)}
+.ivel line{stroke:var(--orange)} .ivel polygon{fill:var(--orange)}
+.rvel line{stroke:var(--purple)} .rvel polygon{fill:var(--purple)}
+.relline{stroke:var(--purple);stroke-width:1;stroke-dasharray:6 5;opacity:.6}
+.hlline{stroke:var(--purple);stroke-width:1.6;stroke-dasharray:5 4}
+.legs{fill:none;stroke:var(--purple);stroke-width:1.6}
+.wedge{fill:color-mix(in srgb,var(--purple) 24%,transparent);stroke:var(--purple);stroke-width:1}
+.cpa{fill:var(--purple)} .cpal{stroke:var(--purple);stroke-width:1;stroke-dasharray:2 3}
+.actl{stroke:var(--purple);stroke-width:2;stroke-dasharray:7 5}
+.north{stroke:var(--muted);stroke-width:1.5}
+.tl{fill:var(--muted);font-size:11.5px;paint-order:stroke;stroke:var(--card);stroke-width:3px;stroke-linejoin:round} .tl.small{font-size:10.5px} .tl.big{font-size:13px;font-weight:700} .tl.hlt{fill:var(--purple);font-weight:700;font-size:12px}
+`;
+document.head.appendChild(style);
+buildTallies();
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,1902 @@
+[
+ {
+  "k": 0,
+  "base": {
+   "reached": true,
+   "time": 319.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 6.883627756191698
+  },
+  "learned": {
+   "reached": true,
+   "time": 337.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 9.604268738362247
+  }
+ },
+ {
+  "k": 1,
+  "base": {
+   "reached": true,
+   "time": 375.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 9.243985296059952
+  },
+  "learned": {
+   "reached": true,
+   "time": 399.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 11.9745527942259
+  }
+ },
+ {
+  "k": 2,
+  "base": {
+   "reached": true,
+   "time": 454.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 4.578596844593964
+  },
+  "learned": {
+   "reached": true,
+   "time": 469.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 12.06735234366078
+  }
+ },
+ {
+  "k": 3,
+  "base": {
+   "reached": true,
+   "time": 485.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 0.6406119517788093
+  },
+  "learned": {
+   "reached": true,
+   "time": 520.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 6.969139856130174
+  }
+ },
+ {
+  "k": 4,
+  "base": {
+   "reached": true,
+   "time": 314.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 4.411438311347067
+  },
+  "learned": {
+   "reached": true,
+   "time": 338.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 8.724521995681322
+  }
+ },
+ {
+  "k": 5,
+  "base": {
+   "reached": true,
+   "time": 542.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 2.7778428724740274
+  },
+  "learned": {
+   "reached": true,
+   "time": 601.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 10.027283653156251
+  }
+ },
+ {
+  "k": 6,
+  "base": {
+   "reached": true,
+   "time": 445.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 8.170382173163476
+  },
+  "learned": {
+   "reached": true,
+   "time": 477.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 13.2518842835908
+  }
+ },
+ {
+  "k": 7,
+  "base": {
+   "reached": true,
+   "time": 272.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 4.0960889405033365
+  },
+  "learned": {
+   "reached": true,
+   "time": 346.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 5.211992183720957
+  }
+ },
+ {
+  "k": 8,
+  "base": {
+   "reached": true,
+   "time": 344.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 6.092451136772288
+  },
+  "learned": {
+   "reached": true,
+   "time": 404.0,
+   "intrusions": 0,
+   "restricted": 2,
+   "exits": 0,
+   "min_sep": 9.328782361280345
+  }
+ },
+ {
+  "k": 9,
+  "base": {
+   "reached": true,
+   "time": 420.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 5.918199477422155
+  },
+  "learned": {
+   "reached": true,
+   "time": 460.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 5.548532967074532
+  }
+ },
+ {
+  "k": 10,
+  "base": {
+   "reached": true,
+   "time": 385.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 4.597807109120206
+  },
+  "learned": {
+   "reached": true,
+   "time": 413.0,
+   "intrusions": 1,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 2.7466866474577607
+  }
+ },
+ {
+  "k": 11,
+  "base": {
+   "reached": true,
+   "time": 379.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 0.8007790400943308
+  },
+  "learned": {
+   "reached": true,
+   "time": 426.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 6.086653233430185
+  }
+ },
+ {
+  "k": 12,
+  "base": {
+   "reached": true,
+   "time": 405.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 1.3318537432736577
+  },
+  "learned": {
+   "reached": true,
+   "time": 490.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 7.315506875955966
+  }
+ },
+ {
+  "k": 13,
+  "base": {
+   "reached": true,
+   "time": 419.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 3.0322917269825465
+  },
+  "learned": {
+   "reached": true,
+   "time": 487.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 10.822901541839805
+  }
+ },
+ {
+  "k": 14,
+  "base": {
+   "reached": true,
+   "time": 394.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 6.329033856854124
+  },
+  "learned": {
+   "reached": true,
+   "time": 430.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 12.909425020472991
+  }
+ },
+ {
+  "k": 15,
+  "base": {
+   "reached": true,
+   "time": 339.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 4.0091811916720825
+  },
+  "learned": {
+   "reached": true,
+   "time": 436.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 13.09305949961371
+  }
+ },
+ {
+  "k": 16,
+  "base": {
+   "reached": true,
+   "time": 473.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 7.014144472166327
+  },
+  "learned": {
+   "reached": true,
+   "time": 491.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 11.441519658884795
+  }
+ },
+ {
+  "k": 17,
+  "base": {
+   "reached": true,
+   "time": 491.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 5.237387241235648
+  },
+  "learned": {
+   "reached": true,
+   "time": 590.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 5.777170557952935
+  }
+ },
+ {
+  "k": 18,
+  "base": {
+   "reached": true,
+   "time": 468.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 2.0282584390930634
+  },
+  "learned": {
+   "reached": true,
+   "time": 483.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 6.968890593612557
+  }
+ },
+ {
+  "k": 19,
+  "base": {
+   "reached": true,
+   "time": 410.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 3.2494777700353716
+  },
+  "learned": {
+   "reached": true,
+   "time": 464.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 7.046784563170898
+  }
+ },
+ {
+  "k": 20,
+  "base": {
+   "reached": true,
+   "time": 452.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 10.697862936140092
+  },
+  "learned": {
+   "reached": true,
+   "time": 471.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 8.331683557364933
+  }
+ },
+ {
+  "k": 21,
+  "base": {
+   "reached": true,
+   "time": 311.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 0.9526255399556693
+  },
+  "learned": {
+   "reached": true,
+   "time": 360.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 6.887066210404721
+  }
+ },
+ {
+  "k": 22,
+  "base": {
+   "reached": true,
+   "time": 501.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 5.544726075100716
+  },
+  "learned": {
+   "reached": true,
+   "time": 551.0,
+   "intrusions": 1,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 2.1780685146474963
+  }
+ },
+ {
+  "k": 23,
+  "base": {
+   "reached": true,
+   "time": 402.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 7.484970078524798
+  },
+  "learned": {
+   "reached": true,
+   "time": 433.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 15.676408845421077
+  }
+ },
+ {
+  "k": 24,
+  "base": {
+   "reached": true,
+   "time": 429.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 0.855075845134861
+  },
+  "learned": {
+   "reached": true,
+   "time": 476.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 8.366498922856685
+  }
+ },
+ {
+  "k": 25,
+  "base": {
+   "reached": true,
+   "time": 386.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 1.8067040928632565
+  },
+  "learned": {
+   "reached": true,
+   "time": 407.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 6.485024858636266
+  }
+ },
+ {
+  "k": 26,
+  "base": {
+   "reached": true,
+   "time": 376.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 3.947624820243487
+  },
+  "learned": {
+   "reached": true,
+   "time": 445.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 5.524788988340529
+  }
+ },
+ {
+  "k": 27,
+  "base": {
+   "reached": true,
+   "time": 343.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 6.412829468731641
+  },
+  "learned": {
+   "reached": true,
+   "time": 369.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 5.457882501697392
+  }
+ },
+ {
+  "k": 28,
+  "base": {
+   "reached": true,
+   "time": 436.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 0.2455919240565233
+  },
+  "learned": {
+   "reached": true,
+   "time": 483.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 7.265651615359646
+  }
+ },
+ {
+  "k": 29,
+  "base": {
+   "reached": true,
+   "time": 495.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 5.429650844794836
+  },
+  "learned": {
+   "reached": true,
+   "time": 536.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 13.51301627035278
+  }
+ },
+ {
+  "k": 30,
+  "base": {
+   "reached": true,
+   "time": 471.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 3.0130741336600897
+  },
+  "learned": {
+   "reached": true,
+   "time": 487.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 7.039931752209003
+  }
+ },
+ {
+  "k": 31,
+  "base": {
+   "reached": true,
+   "time": 338.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 4.433240309737468
+  },
+  "learned": {
+   "reached": true,
+   "time": 342.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 7.605428750315476
+  }
+ },
+ {
+  "k": 32,
+  "base": {
+   "reached": true,
+   "time": 282.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 4.892648328552993
+  },
+  "learned": {
+   "reached": true,
+   "time": 309.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 7.919622582225221
+  }
+ },
+ {
+  "k": 33,
+  "base": {
+   "reached": true,
+   "time": 450.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 7.286740496825846
+  },
+  "learned": {
+   "reached": true,
+   "time": 565.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 5.324613016904323
+  }
+ },
+ {
+  "k": 34,
+  "base": {
+   "reached": true,
+   "time": 428.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 2.978344350796722
+  },
+  "learned": {
+   "reached": true,
+   "time": 484.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 12.085248621724661
+  }
+ },
+ {
+  "k": 35,
+  "base": {
+   "reached": true,
+   "time": 350.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 1.666472104753505
+  },
+  "learned": {
+   "reached": true,
+   "time": 391.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 6.618854433722116
+  }
+ },
+ {
+  "k": 36,
+  "base": {
+   "reached": true,
+   "time": 404.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 5.600816247702639
+  },
+  "learned": {
+   "reached": true,
+   "time": 491.0,
+   "intrusions": 1,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 4.708356908726373
+  }
+ },
+ {
+  "k": 37,
+  "base": {
+   "reached": true,
+   "time": 401.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 1.89355083264427
+  },
+  "learned": {
+   "reached": true,
+   "time": 478.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 11.165139681885812
+  }
+ },
+ {
+  "k": 38,
+  "base": {
+   "reached": true,
+   "time": 508.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 10.153855504943735
+  },
+  "learned": {
+   "reached": true,
+   "time": 524.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 15.526625362165056
+  }
+ },
+ {
+  "k": 39,
+  "base": {
+   "reached": true,
+   "time": 449.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 1.5874135078969647
+  },
+  "learned": {
+   "reached": true,
+   "time": 533.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 9.603235025708592
+  }
+ },
+ {
+  "k": 40,
+  "base": {
+   "reached": true,
+   "time": 294.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 2.3356973277186164
+  },
+  "learned": {
+   "reached": true,
+   "time": 373.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 5.89704859339647
+  }
+ },
+ {
+  "k": 41,
+  "base": {
+   "reached": true,
+   "time": 437.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 1.666446811714126
+  },
+  "learned": {
+   "reached": true,
+   "time": 498.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 8.008205314823607
+  }
+ },
+ {
+  "k": 42,
+  "base": {
+   "reached": true,
+   "time": 393.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 3.145900888563171
+  },
+  "learned": {
+   "reached": true,
+   "time": 463.0,
+   "intrusions": 1,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 4.00598662687631
+  }
+ },
+ {
+  "k": 43,
+  "base": {
+   "reached": true,
+   "time": 423.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 0.5416943067481362
+  },
+  "learned": {
+   "reached": true,
+   "time": 468.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 7.483123430094064
+  }
+ },
+ {
+  "k": 44,
+  "base": {
+   "reached": true,
+   "time": 359.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 1.0238932955365863
+  },
+  "learned": {
+   "reached": true,
+   "time": 385.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 6.987645935814168
+  }
+ },
+ {
+  "k": 45,
+  "base": {
+   "reached": true,
+   "time": 415.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 10.743403569320265
+  },
+  "learned": {
+   "reached": true,
+   "time": 438.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 15.29047030154573
+  }
+ },
+ {
+  "k": 46,
+  "base": {
+   "reached": true,
+   "time": 331.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 0.9059662156445711
+  },
+  "learned": {
+   "reached": true,
+   "time": 367.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 6.576473646338054
+  }
+ },
+ {
+  "k": 47,
+  "base": {
+   "reached": true,
+   "time": 467.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 4.275548977579694
+  },
+  "learned": {
+   "reached": true,
+   "time": 514.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 11.695035649600875
+  }
+ },
+ {
+  "k": 48,
+  "base": {
+   "reached": true,
+   "time": 369.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 3.319297801132833
+  },
+  "learned": {
+   "reached": true,
+   "time": 429.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 6.203269829447374
+  }
+ },
+ {
+  "k": 49,
+  "base": {
+   "reached": true,
+   "time": 310.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 2.253651260309192
+  },
+  "learned": {
+   "reached": true,
+   "time": 334.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 6.865255544577329
+  }
+ },
+ {
+  "k": 50,
+  "base": {
+   "reached": true,
+   "time": 394.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 4.370704683892595
+  },
+  "learned": {
+   "reached": true,
+   "time": 399.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 6.245364836728724
+  }
+ },
+ {
+  "k": 51,
+  "base": {
+   "reached": true,
+   "time": 274.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 1.0475455567359435
+  },
+  "learned": {
+   "reached": true,
+   "time": 307.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 5.559866937246566
+  }
+ },
+ {
+  "k": 52,
+  "base": {
+   "reached": true,
+   "time": 446.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 5.267007570114076
+  },
+  "learned": {
+   "reached": true,
+   "time": 554.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 6.562763584807869
+  }
+ },
+ {
+  "k": 53,
+  "base": {
+   "reached": true,
+   "time": 347.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 0.6493669341539096
+  },
+  "learned": {
+   "reached": true,
+   "time": 389.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 6.303831589475346
+  }
+ },
+ {
+  "k": 54,
+  "base": {
+   "reached": true,
+   "time": 431.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 9.135812732209784
+  },
+  "learned": {
+   "reached": true,
+   "time": 449.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 15.495793712300642
+  }
+ },
+ {
+  "k": 55,
+  "base": {
+   "reached": true,
+   "time": 409.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 1.55790140535578
+  },
+  "learned": {
+   "reached": true,
+   "time": 456.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 7.156805544836574
+  }
+ },
+ {
+  "k": 56,
+  "base": {
+   "reached": true,
+   "time": 387.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 3.9794938129861244
+  },
+  "learned": {
+   "reached": true,
+   "time": 417.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 10.14306881169566
+  }
+ },
+ {
+  "k": 57,
+  "base": {
+   "reached": true,
+   "time": 439.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 2.0761028665759325
+  },
+  "learned": {
+   "reached": true,
+   "time": 518.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 7.953397078891446
+  }
+ },
+ {
+  "k": 58,
+  "base": {
+   "reached": true,
+   "time": 452.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 6.082091949565694
+  },
+  "learned": {
+   "reached": true,
+   "time": 458.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 8.841398817343068
+  }
+ },
+ {
+  "k": 59,
+  "base": {
+   "reached": true,
+   "time": 344.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 0.5273195660635361
+  },
+  "learned": {
+   "reached": true,
+   "time": 452.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 6.316743471653741
+  }
+ },
+ {
+  "k": 60,
+  "base": {
+   "reached": true,
+   "time": 463.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 1.364187756584167
+  },
+  "learned": {
+   "reached": true,
+   "time": 501.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 6.194965315284124
+  }
+ },
+ {
+  "k": 61,
+  "base": {
+   "reached": true,
+   "time": 411.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 10.409594887435805
+  },
+  "learned": {
+   "reached": true,
+   "time": 406.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 8.523691077453972
+  }
+ },
+ {
+  "k": 62,
+  "base": {
+   "reached": true,
+   "time": 392.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 2.629596578794566
+  },
+  "learned": {
+   "reached": true,
+   "time": 473.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 5.9516582334833235
+  }
+ },
+ {
+  "k": 63,
+  "base": {
+   "reached": true,
+   "time": 327.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 2.185505780060653
+  },
+  "learned": {
+   "reached": true,
+   "time": 365.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 5.332085888315174
+  }
+ },
+ {
+  "k": 64,
+  "base": {
+   "reached": true,
+   "time": 368.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 0.27058076246119867
+  },
+  "learned": {
+   "reached": true,
+   "time": 409.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 6.97338558661827
+  }
+ },
+ {
+  "k": 65,
+  "base": {
+   "reached": true,
+   "time": 266.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 4.172356563447375
+  },
+  "learned": {
+   "reached": true,
+   "time": 326.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 11.323579427603722
+  }
+ },
+ {
+  "k": 66,
+  "base": {
+   "reached": true,
+   "time": 473.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 0.4612161020987737
+  },
+  "learned": {
+   "reached": true,
+   "time": 511.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 6.082759738045326
+  }
+ },
+ {
+  "k": 67,
+  "base": {
+   "reached": true,
+   "time": 343.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 8.953088117252634
+  },
+  "learned": {
+   "reached": true,
+   "time": 356.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 9.89569259662545
+  }
+ },
+ {
+  "k": 68,
+  "base": {
+   "reached": true,
+   "time": 392.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 9.836446129880757
+  },
+  "learned": {
+   "reached": true,
+   "time": 427.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 13.899882061181355
+  }
+ },
+ {
+  "k": 69,
+  "base": {
+   "reached": true,
+   "time": 401.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 5.646739986414798
+  },
+  "learned": {
+   "reached": true,
+   "time": 445.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 12.807571777612278
+  }
+ },
+ {
+  "k": 70,
+  "base": {
+   "reached": true,
+   "time": 372.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 4.909684701500656
+  },
+  "learned": {
+   "reached": true,
+   "time": 486.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 5.862787940130101
+  }
+ },
+ {
+  "k": 71,
+  "base": {
+   "reached": true,
+   "time": 462.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 3.2874284588257976
+  },
+  "learned": {
+   "reached": true,
+   "time": 504.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 8.056394275080711
+  }
+ },
+ {
+  "k": 72,
+  "base": {
+   "reached": true,
+   "time": 433.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 4.986471603219627
+  },
+  "learned": {
+   "reached": true,
+   "time": 477.0,
+   "intrusions": 1,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 1.6000895453002115
+  }
+ },
+ {
+  "k": 73,
+  "base": {
+   "reached": true,
+   "time": 404.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 15.087804680223796
+  },
+  "learned": {
+   "reached": true,
+   "time": 426.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 16.16832971682827
+  }
+ },
+ {
+  "k": 74,
+  "base": {
+   "reached": true,
+   "time": 355.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 1.151580428872446
+  },
+  "learned": {
+   "reached": true,
+   "time": 418.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 6.612962064175782
+  }
+ },
+ {
+  "k": 75,
+  "base": {
+   "reached": true,
+   "time": 423.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 6.246847702237244
+  },
+  "learned": {
+   "reached": true,
+   "time": 428.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 8.454619264783434
+  }
+ },
+ {
+  "k": 76,
+  "base": {
+   "reached": true,
+   "time": 417.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 5.022125378353498
+  },
+  "learned": {
+   "reached": true,
+   "time": 431.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 11.24504544583075
+  }
+ },
+ {
+  "k": 77,
+  "base": {
+   "reached": true,
+   "time": 492.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 2.420337961150592
+  },
+  "learned": {
+   "reached": true,
+   "time": 556.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 6.9224122717355385
+  }
+ },
+ {
+  "k": 78,
+  "base": {
+   "reached": true,
+   "time": 327.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 6.432708384159538
+  },
+  "learned": {
+   "reached": true,
+   "time": 382.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 9.387611868193058
+  }
+ },
+ {
+  "k": 79,
+  "base": {
+   "reached": true,
+   "time": 522.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 4.647013110355536
+  },
+  "learned": {
+   "reached": true,
+   "time": 538.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 9.760173864909847
+  }
+ },
+ {
+  "k": 80,
+  "base": {
+   "reached": true,
+   "time": 508.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 8.82223307146757
+  },
+  "learned": {
+   "reached": true,
+   "time": 530.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 12.416408075136724
+  }
+ },
+ {
+  "k": 81,
+  "base": {
+   "reached": true,
+   "time": 389.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 0.4409668061562907
+  },
+  "learned": {
+   "reached": true,
+   "time": 429.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 6.835466515046319
+  }
+ },
+ {
+  "k": 82,
+  "base": {
+   "reached": true,
+   "time": 478.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 1.6207523420058092
+  },
+  "learned": {
+   "reached": true,
+   "time": 499.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 6.350711500087059
+  }
+ },
+ {
+  "k": 83,
+  "base": {
+   "reached": true,
+   "time": 346.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 3.3262948774731425
+  },
+  "learned": {
+   "reached": true,
+   "time": 426.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 5.956439029829772
+  }
+ },
+ {
+  "k": 84,
+  "base": {
+   "reached": true,
+   "time": 353.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 1.8286239615565167
+  },
+  "learned": {
+   "reached": true,
+   "time": 380.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 5.843625952275101
+  }
+ },
+ {
+  "k": 85,
+  "base": {
+   "reached": true,
+   "time": 358.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 5.620810939913493
+  },
+  "learned": {
+   "reached": true,
+   "time": 386.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 10.924439075292838
+  }
+ },
+ {
+  "k": 86,
+  "base": {
+   "reached": true,
+   "time": 382.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 3.3697041580188634
+  },
+  "learned": {
+   "reached": true,
+   "time": 445.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 6.461674506804111
+  }
+ },
+ {
+  "k": 87,
+  "base": {
+   "reached": true,
+   "time": 346.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 6.984453387271177
+  },
+  "learned": {
+   "reached": true,
+   "time": 411.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 14.042487894125488
+  }
+ },
+ {
+  "k": 88,
+  "base": {
+   "reached": true,
+   "time": 346.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 1.142332585091938
+  },
+  "learned": {
+   "reached": true,
+   "time": 400.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 5.869802459840825
+  }
+ },
+ {
+  "k": 89,
+  "base": {
+   "reached": true,
+   "time": 448.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 4.409992947331691
+  },
+  "learned": {
+   "reached": true,
+   "time": 494.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 11.753912482650358
+  }
+ },
+ {
+  "k": 90,
+  "base": {
+   "reached": true,
+   "time": 362.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 2.855903377906337
+  },
+  "learned": {
+   "reached": true,
+   "time": 449.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 5.95171767073194
+  }
+ },
+ {
+  "k": 91,
+  "base": {
+   "reached": true,
+   "time": 330.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 2.049216264251262
+  },
+  "learned": {
+   "reached": true,
+   "time": 380.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 6.1101597097500795
+  }
+ },
+ {
+  "k": 92,
+  "base": {
+   "reached": true,
+   "time": 486.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 0.6380210656781741
+  },
+  "learned": {
+   "reached": true,
+   "time": 530.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 7.775405933720226
+  }
+ },
+ {
+  "k": 93,
+  "base": {
+   "reached": true,
+   "time": 380.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 1.5259970646981722
+  },
+  "learned": {
+   "reached": true,
+   "time": 421.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 6.64300054879877
+  }
+ },
+ {
+  "k": 94,
+  "base": {
+   "reached": true,
+   "time": 335.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 1.7937893802791225
+  },
+  "learned": {
+   "reached": true,
+   "time": 377.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 5.9939951906311855
+  }
+ },
+ {
+  "k": 95,
+  "base": {
+   "reached": true,
+   "time": 441.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 4.321262681429524
+  },
+  "learned": {
+   "reached": true,
+   "time": 466.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 11.891512510707637
+  }
+ },
+ {
+  "k": 96,
+  "base": {
+   "reached": true,
+   "time": 495.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 8.716411334524642
+  },
+  "learned": {
+   "reached": true,
+   "time": 531.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 13.209287685656362
+  }
+ },
+ {
+  "k": 97,
+  "base": {
+   "reached": true,
+   "time": 483.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 6.888247747131851
+  },
+  "learned": {
+   "reached": true,
+   "time": 559.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 13.546084947734665
+  }
+ },
+ {
+  "k": 98,
+  "base": {
+   "reached": true,
+   "time": 405.0,
+   "intrusions": 1,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 1.5884016029635286
+  },
+  "learned": {
+   "reached": true,
+   "time": 438.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 8.07144993699126
+  }
+ },
+ {
+  "k": 99,
+  "base": {
+   "reached": true,
+   "time": 307.0,
+   "intrusions": 0,
+   "restricted": 1,
+   "exits": 0,
+   "min_sep": 5.125385040492683
+  },
+  "learned": {
+   "reached": true,
+   "time": 408.0,
+   "intrusions": 0,
+   "restricted": 0,
+   "exits": 0,
+   "min_sep": 5.508025392003976
+  }
+ }
+]

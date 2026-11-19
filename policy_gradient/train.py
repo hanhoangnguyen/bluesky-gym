@@ -35,6 +35,9 @@ def main():
     ap.add_argument("--watch", action="store_true", help="no training: render the saved policy")
     ap.add_argument("--cpa", action="store_true",
                     help="stage 3: add closest-point-of-approach features (time and signed miss distance)")
+    ap.add_argument("--speed", action="store_true", help="also learn the speed action (second Gaussian head)")
+    ap.add_argument("--gate", type=float, nargs=2, metavar=("TCPA_S", "DCPA_NM"),
+                    help="treat an intruder as absent unless it will pass within DCPA_NM within TCPA_S seconds")
     ap.add_argument("--evaluate", action="store_true",
                     help="no training: greedy evaluation of the saved policy on --eval-n scenarios")
     args = ap.parse_args()
@@ -44,8 +47,9 @@ def main():
 
     env = NavEnv(stage=args.stage, scale=args.scale, seed=args.seed,
                  event_penalty=args.event_penalty, lam=args.lam,
-                 render_mode="human" if args.watch else None)
-    ac = ActorCritic(env, args.stage, seed=args.seed, n_eval=args.eval_n, cpa=args.cpa)
+                 render_mode="human" if args.watch else None, speed=args.speed)
+    ac = ActorCritic(env, args.stage, seed=args.seed, n_eval=args.eval_n, cpa=args.cpa,
+                     speed=args.speed, gate=tuple(args.gate) if args.gate else None)
 
     src = args.load or (out if (args.watch or args.evaluate) else None)
     if src:
@@ -56,6 +60,8 @@ def main():
         # feature groups are appended stage by stage (goal group first), so an earlier stage's
         # checkpoint fills the front of this stage's parameter vectors
         ac.w[:n_ck], ac.theta_mu[:n_ck], ac.theta_sigma[:n_ck] = ck["w"], ck["theta_mu"], ck["theta_sigma"]
+        if ac.speed and "theta_mu_s" in ck:       # a checkpoint that already has a speed head
+            ac.theta_mu_s[:n_ck], ac.theta_sigma_s[:n_ck] = ck["theta_mu_s"], ck["theta_sigma_s"]
 
     if args.evaluate:
         n = args.eval_n
@@ -72,6 +78,7 @@ def main():
         print("  intrusion         ", ci(r["intrusion"]))
         print("  sector exit       ", ci(r["sector_exit"]))
         print(f"  mean flight time   {r['mean_time']:.0f} s (successful episodes)")
+        print(f"  mean airspeed      {r['mean_speed']:.1f} m/s")
         env.close()
         return
 

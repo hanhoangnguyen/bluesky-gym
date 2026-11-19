@@ -5,7 +5,8 @@
 
 What changes compared with ``gym.make("CompetitionEnv-v0")``:
 
-* one continuous action, the heading change (speed is held), so a Gaussian policy fits;
+* one continuous action, the heading change (speed is held), so a Gaussian policy fits; with
+  ``speed=True`` there is a second one, the speed change (+ = accelerate, a fraction of ``d_speed`` per step);
 * the 131-number observation is boiled down to a few physical quantities (``State``);
 * our own reward (like the Dubins one, in units of ``reward_scale`` seconds):
 
@@ -45,6 +46,7 @@ class State:
     # (distance_nm, bearing rad, aspect rad, time to closest approach s, signed miss distance nm;
     #  miss distance > 0: the intruder will pass on our right)
     intruder: Optional[tuple] = None
+    speed_ms: float = AGENT_SPEED              # own true airspeed (m/s); only varies when NavEnv(speed=True)
 
 
 def wrap(a):
@@ -54,11 +56,12 @@ def wrap(a):
 class NavEnv:
     def __init__(self, stage=1, fixed_prob=0.25, scale=0.5, action_frequency=10, seed=0,
                  goal_bonus=5.0, lam=0.01, event_penalty=0.5, reward_scale=100.0,
-                 render_mode=None):
+                 render_mode=None, speed=False):
         n_obs, n_int = STAGE_COUNTS[stage]
         self.stage, self.scale = stage, scale
         self.goal_bonus, self.lam = goal_bonus, lam
         self.event_penalty, self.reward_scale = event_penalty, reward_scale
+        self.speed = speed
         self.env = CompetitionEnv(render_mode=render_mode, n_obstacles=n_obs, n_intruders=n_int,
                                   action_frequency=action_frequency)
         self.env.scenario_generator = StageGenerator(stage, fixed_prob, scale)   # same .generate(rng) interface
@@ -80,9 +83,11 @@ class NavEnv:
         return self.state
 
     def step(self, a):
-        a = float(np.clip(a, -1.0, 1.0))
+        """a: heading action (float), or (heading, speed) when speed=True; each in [-1, 1]."""
+        a_h, a_s = (a if self.speed else (a, 0.0))
+        action = np.clip(np.array([a_h, a_s], dtype=float), -1.0, 1.0)
         before, d0 = self.info, self.state.dist_goal_km
-        obs, _, terminal, truncated, info = self.env.step(np.array([a, 0.0]))
+        obs, _, terminal, truncated, info = self.env.step(action)
         self.info = info
         self.state = self._state(obs)
 
@@ -106,7 +111,8 @@ class NavEnv:
     def _state(self, obs):
         goal_bearing = wrap(-math.atan2(obs["sin_drift"][0], obs["cos_drift"][0]))   # drift = hdg - qdr
         s = State(dist_goal_km=float(obs["waypoint_distance"][0]) * self.env.waypoint_obs.distance_norm,
-                  goal_bearing=goal_bearing)
+                  goal_bearing=goal_bearing,
+                  speed_ms=float(obs["airspeed"][0]) * self.env.airspeed_obs.spd_std + self.env.airspeed_obs.spd_mean)
         if len(obs["obstacle_distance"]):
             o = self.env.obstacle_obs
             centre_nm = float(obs["obstacle_distance"][0]) * o.distance_norm / NM2KM

@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Why circular-obstacle pathfinding does not fit this competition</title>
+<style>
+:root{
+  --bg:#fbfaf7; --fg:#1f2328; --muted:#5d6670; --card:#ffffff; --line:#e3e1db; --soft:#f2f0ea;
+  --blue:#0072B2; --orange:#E69F00; --green:#009E73; --red:#D55E00; --purple:#CC79A7; --grey:#6b7280;
+  --shadow:0 1px 2px rgba(0,0,0,.05),0 4px 14px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#14161a; --fg:#e7e9ec; --muted:#9aa4ae; --card:#1c1f24; --line:#2c3036; --soft:#23272d; --shadow:0 1px 2px rgba(0,0,0,.4); }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+header.hero{padding:44px 0 14px}
+.eyebrow{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+h1{font-size:clamp(28px,4.6vw,42px);line-height:1.12;margin:8px 0 12px;letter-spacing:-.02em}
+.lead{font-size:18px;color:var(--muted);max-width:840px;margin:0 0 10px}
+h2{font-size:25px;letter-spacing:-.01em;margin:40px 0 6px}
+h3{font-size:16.5px;margin:0 0 4px}
+p{margin:.4em 0 .9em}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.9em;background:var(--soft);padding:1px 6px;border-radius:5px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px}
+.grid{display:grid;gap:14px}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g5{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media(max-width:900px){.g4,.g5{grid-template-columns:repeat(2,minmax(0,1fr))}.g2{grid-template-columns:1fr}}
+.stat b{display:block;font-size:34px;letter-spacing:-.02em;line-height:1.1}
+.stat span{font-size:13.5px;color:var(--muted)}
+.explore{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;align-items:start}
+@media(max-width:900px){.explore{grid-template-columns:1fr}}
+.scene{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+svg{display:block;width:100%;height:auto;touch-action:none}
+svg text{font-family:inherit}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}
+.chips button{border:1px solid var(--line);background:var(--card);color:var(--muted);font:inherit;font-size:13px;padding:3px 11px;border-radius:999px;cursor:pointer}
+.chips button[aria-pressed=true]{background:var(--soft);color:var(--fg);border-color:var(--purple);font-weight:600}
+.tg{display:grid;gap:6px;margin:8px 0}
+.tg label{display:flex;gap:8px;align-items:center;font-size:14px;cursor:pointer}
+.sw{display:inline-block;width:22px;height:0;border-top:3px solid;vertical-align:middle}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+button.btn{border:1px solid var(--line);background:var(--card);color:var(--fg);font:inherit;font-size:13.5px;padding:5px 12px;border-radius:9px;cursor:pointer}
+button.btn:hover{background:var(--soft)}
+input[type=range]{flex:1;min-width:140px}
+.facts{font-size:14px}
+.facts div{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid var(--line)}
+.facts div > span:first-child{color:var(--muted)}
+.facts b{font-weight:600;text-align:right}
+.bad{color:var(--red)} .good{color:var(--green)}
+.reason{display:grid;grid-template-columns:34px 1fr auto;gap:12px;align-items:start;padding:14px 0;border-bottom:1px solid var(--line)}
+@media(max-width:600px){.reason{grid-template-columns:34px 1fr}.reason button{grid-column:2;justify-self:start}}
+.reason .n{width:30px;height:30px;border-radius:50%;background:var(--soft);display:flex;align-items:center;justify-content:center;font-weight:700}
+.reason p{margin:.2em 0 0;color:var(--muted);font-size:15px}
+.callout{background:color-mix(in srgb,var(--orange) 14%,var(--card));border:1px solid color-mix(in srgb,var(--orange) 40%,var(--line));border-radius:12px;padding:12px 16px;font-size:15px}
+.callout.green{background:color-mix(in srgb,var(--green) 10%,var(--card));border-color:color-mix(in srgb,var(--green) 35%,var(--line))}
+.note{font-size:13.5px;color:var(--muted);border-left:3px solid var(--line);padding-left:12px;margin:12px 0}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+th{font-size:12.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
+footer{padding:36px 0 70px;color:var(--muted);font-size:13.5px}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <div class="eyebrow">Red Blob Games &middot; circular-obstacle pathfinding &middot; and our competition</div>
+  <h1>Why circular-obstacle pathfinding does not fit here</h1>
+  <p class="lead">The article's method is a neat answer to a different question: <i>the shortest route for a point through a fixed field of round obstacles</i>. Our world has obstacles that are irregular polygons, intruders that move, aircraft that turn slowly, and a rule that the solution must be learned. Below, every picture is a real scenario from the competition generator.</p>
+  <div class="grid g4" style="margin-top:20px" id="stats"></div>
+</div></header>
+
+<main class="wrap">
+  <h2>Explore real scenarios</h2>
+  <p style="color:var(--muted);max-width:820px">Switch layers on and off, step through scenarios, and press play to fly a path while the intruders move. Or jump straight to one of the five reasons further down with its <b>Show me</b> button.</p>
+  <div class="explore">
+    <div>
+      <div class="scene"><svg id="map" viewBox="0 0 640 640" role="img" aria-label="A competition scenario"></svg></div>
+      <div class="row">
+        <button class="btn" id="play">Play</button>
+        <input id="time" type="range" min="0" max="900" step="5" value="0" aria-label="Flight time">
+        <span id="tlabel" style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;min-width:70px;text-align:right"></span>
+      </div>
+    </div>
+    <div>
+      <div class="chips" id="chips"></div>
+      <div class="tg" id="toggles"></div>
+      <div class="row" style="margin-top:4px"><span style="font-size:14px;color:var(--muted)">Fly along:</span>
+        <label style="font-size:14px"><input type="radio" name="fly" value="poly" checked> exact-polygon shortest path</label>
+        <label style="font-size:14px"><input type="radio" name="fly" value="straight"> straight line</label>
+      </div>
+      <div class="card facts" style="margin-top:14px" id="facts"></div>
+    </div>
+  </div>
+
+  <h2>Five reasons, each one you can see above</h2>
+  <div class="card" id="reasons"></div>
+
+  <h2>Is any version of it still useful?</h2>
+  <div class="callout green"><b>Possibly, but only on the training side.</b> The environment itself knows the exact polygons, so it could compute the shortest-path distance to the goal around them and use that to shape the <i>reward</i> during training (a potential-based term, which does not change what the best policy is). Nothing from the planner would run when the policy is deployed, and the policy would still only see what the observation gives it. It addresses the static obstacles only. Today our weak spot is the intruders, so it is not the next thing to build.</div>
+
+  <h2>The numbers behind the page</h2>
+  <div class="card"><table id="numtable"></table></div>
+  <p class="note" id="method"></p>
+</main>
+<footer><div class="wrap">Generated for the han_dev testbed &middot; no external libraries &middot; works offline.</div></footer>
+
+<script>
+const DATA = __DATA__;
+const SC = DATA.scenarios, ST = DATA.stats;
+const pct = x => Math.round(x * 100) + '%';
+const f1 = x => x.toFixed(1);
+
+/* ---------------------------------------------------------------- headline stats */
+document.getElementById('stats').innerHTML = [
+  [pct(ST.start_or_goal_inside_circle), 'of scenarios have the start or goal <b>inside</b> an obstacle\'s enclosing circle, so a circle planner has no path at all'],
+  [f1(ST.circle_to_polygon_area_ratio.median) + '×', 'median area of the enclosing circle compared with the real polygon'],
+  [pct(ST.static_polygon_path_hits_intruder), 'of scenarios where even the best static path (exact polygons) still comes within 5 NM of an intruder'],
+  ['0', 'polygon vertices in the observation: the policy only gets a centroid and a radius per obstacle']
+].map(([b, s]) => `<div class="card stat"><b>${b}</b><span>${s}</span></div>`).join('');
+
+/* ---------------------------------------------------------------- state */
+let idx = 0, t = 0, playing = false, timer = null;
+const L = { poly: true, circ: true, straight: false, ppath: true, cpath: true, routes: true, turns: false, fill: false };
+const TOG = [
+  ['poly', 'Real obstacle polygons', 'var(--red)', 'solid'],
+  ['circ', 'Enclosing circles (what the observation describes)', 'var(--red)', 'dashed'],
+  ['straight', 'Straight line, start to goal', 'var(--grey)', 'dashed'],
+  ['ppath', 'Shortest path around the exact polygons (best case)', 'var(--green)', 'solid'],
+  ['cpath', 'What a circle planner gets from the enclosing circles', 'var(--purple)', 'dashed'],
+  ['routes', 'Intruder routes (and 5 NM bubbles when flying)', 'var(--orange)', 'solid'],
+  ['turns', 'Label the corner turns on the exact path', 'var(--fg)', 'solid']
+];
+let flyMode = 'poly';
+
+function buildControls() {
+  document.getElementById('chips').innerHTML = SC.map((_, i) => `<button data-i="${i}" aria-pressed="${i === idx}">${i + 1}</button>`).join('');
+  document.querySelectorAll('#chips button').forEach(b => b.onclick = () => { idx = +b.dataset.i; t = 0; stop(); build(); });
+  document.getElementById('toggles').innerHTML = TOG.map(([k, name, col, st]) =>
+    `<label><input type="checkbox" data-k="${k}" ${L[k] ? 'checked' : ''}><span class="sw" style="border-color:${col};border-top-style:${st}"></span>${name}</label>`).join('');
+  document.querySelectorAll('#toggles input').forEach(c => c.onchange = () => { L[c.dataset.k] = c.checked; render(); });
+  document.querySelectorAll('input[name=fly]').forEach(r => r.onchange = () => { flyMode = r.value; render(); });
+}
+
+/* ---------------------------------------------------------------- geometry helpers */
+function polylineLen(p) { let s = 0; for (let i = 1; i < p.length; i++) s += Math.hypot(p[i][0] - p[i-1][0], p[i][1] - p[i-1][1]); return s; }
+function along(p, s) {            // point at distance s along a polyline; beyond the end it keeps the last heading
+  for (let i = 1; i < p.length; i++) {
+    const d = Math.hypot(p[i][0] - p[i-1][0], p[i][1] - p[i-1][1]);
+    if (s <= d || i === p.length - 1) {
+      const f = d ? s / d : 0;
+      return [p[i-1][0] + f * (p[i][0] - p[i-1][0]), p[i-1][1] + f * (p[i][1] - p[i-1][1])];
+    }
+    s -= d;
+  }
+  return p[p.length - 1];
+}
+const EGO_NM_S = 150 / 1852;
+function egoPos(S, time) {
+  const path = flyMode === 'poly' ? S.poly_path : S.straight;
+  const total = polylineLen(path);
+  return along(path, Math.min(EGO_NM_S * time, total));
+}
+function intrPos(r, time) { return along(r.pts, r.v / 1852 * time); }
+function minSepUpTo(S, time) {
+  let best = Infinity, tb = 0;
+  for (let u = 0; u <= time; u += 5) {
+    const e = egoPos(S, u);
+    for (const r of S.routes) { const q = intrPos(r, u), d = Math.hypot(e[0] - q[0], e[1] - q[1]); if (d < best) { best = d; tb = u; } }
+  }
+  return [best, tb];
+}
+function tEnd(S) {
+  const path = flyMode === 'poly' ? S.poly_path : S.straight;
+  return Math.ceil((polylineLen(path) - 2.7) / EGO_NM_S / 5) * 5;
+}
+
+/* ---------------------------------------------------------------- drawing */
+const W = 640, M = 24;
+function frame(S) {
+  const xs = S.sector.map(p => p[0]), ys = S.sector.map(p => p[1]);
+  const minx = Math.min(...xs) - 8, maxx = Math.max(...xs) + 8, miny = Math.min(...ys) - 8, maxy = Math.max(...ys) + 8;
+  const k = (W - 2 * M) / Math.max(maxx - minx, maxy - miny);
+  return { k, P: (x, y) => [M + (x - minx) * k, W - M - (y - miny) * k] };
+}
+const pl = pts => pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+
+function render() {
+  const S = SC[idx], { k, P } = frame(S);
+  const svg = document.getElementById('map');
+  let s = '';
+  s += `<polygon points="${pl(S.sector.map(p => P(...p)))}" fill="none" stroke="var(--grey)" stroke-width="1.2" stroke-dasharray="6 5" opacity=".8"/>`;
+  S.circles.forEach((c, i) => {
+    if (L.circ) { const q = P(...c.c); s += `<circle cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="${(c.r * k).toFixed(1)}" fill="${L.poly ? 'none' : 'color-mix(in srgb,var(--red) 22%,transparent)'}" stroke="var(--red)" stroke-width="1.5" stroke-dasharray="5 4"/>`; }
+  });
+  if (L.poly) S.polys.forEach(p => { s += `<polygon points="${pl(p.map(q => P(...q)))}" fill="color-mix(in srgb,var(--red) 40%,transparent)" stroke="var(--red)" stroke-width="1.8"/>`; });
+  if (L.routes) S.routes.forEach(r => { s += `<polyline points="${pl(r.pts.map(q => P(...q)))}" fill="none" stroke="var(--orange)" stroke-width="1.3" opacity=".55"/>`; });
+  if (L.straight) s += `<polyline points="${pl(S.straight.map(q => P(...q)))}" fill="none" stroke="var(--grey)" stroke-width="2" stroke-dasharray="6 5"/>`;
+  if (L.cpath && S.circle_path) s += `<polyline points="${pl(S.circle_path.map(q => P(...q)))}" fill="none" stroke="var(--purple)" stroke-width="2.6" stroke-dasharray="7 5"/>`;
+  if (L.ppath) s += `<polyline points="${pl(S.poly_path.map(q => P(...q)))}" fill="none" stroke="var(--green)" stroke-width="3" stroke-linejoin="round"/>`;
+  if (L.turns && L.ppath) S.poly_path.slice(1, -1).forEach((q, i) => { const a = P(...q); s += `<text x="${(a[0] + 8).toFixed(1)}" y="${(a[1] - 7).toFixed(1)}" font-size="13" font-weight="700" fill="var(--fg)" style="paint-order:stroke;stroke:var(--card);stroke-width:3px">${S.corner_turns[i].toFixed(0)}°</text>`; });
+  // start and goal, ringed in red when inside an enclosing circle
+  const sp = P(...S.start), gp = P(...S.goal);
+  if (S.start_in_circle && L.circ) s += `<circle cx="${sp[0].toFixed(1)}" cy="${sp[1].toFixed(1)}" r="13" fill="none" stroke="var(--red)" stroke-width="3"/>`;
+  if (S.goal_in_circle && L.circ) s += `<circle cx="${gp[0].toFixed(1)}" cy="${gp[1].toFixed(1)}" r="15" fill="none" stroke="var(--red)" stroke-width="3"/>`;
+  s += `<circle cx="${sp[0].toFixed(1)}" cy="${sp[1].toFixed(1)}" r="6" fill="var(--blue)"/><text x="${(sp[0] + 10).toFixed(1)}" y="${(sp[1] + 18).toFixed(1)}" font-size="13" fill="var(--muted)">start</text>`;
+  s += `<text x="${gp[0].toFixed(1)}" y="${(gp[1] + 6).toFixed(1)}" font-size="22" text-anchor="middle" fill="var(--green)">★</text><text x="${(gp[0] + 12).toFixed(1)}" y="${(gp[1] + 18).toFixed(1)}" font-size="13" fill="var(--muted)">goal</text>`;
+  if (L.cpath && !S.circle_path) {
+    const bad = S.start_in_circle ? sp : gp;
+    const right = bad[0] > W / 2;
+    s += `<text x="${(bad[0] + (right ? -18 : 18)).toFixed(1)}" y="${(bad[1] - 18).toFixed(1)}" text-anchor="${right ? 'end' : 'start'}" font-size="14" font-weight="700" fill="var(--red)" style="paint-order:stroke;stroke:var(--card);stroke-width:3px">no path: ${S.start_in_circle && S.goal_in_circle ? 'start and goal are' : (S.start_in_circle ? 'start is' : 'goal is')} inside a circle</text>`;
+  }
+  // moving things
+  const showMove = t > 0;
+  let sepNow = null;
+  if (showMove) {
+    const e = egoPos(S, t), ep = P(...e);
+    const trail = []; for (let u = 0; u <= t; u += 5) trail.push(P(...egoPos(S, u)));
+    s += `<polyline points="${pl(trail)}" fill="none" stroke="var(--blue)" stroke-width="2.2" opacity=".85"/>`;
+    S.routes.forEach(r => {
+      const q = intrPos(r, t), qp = P(...q), d = Math.hypot(e[0] - q[0], e[1] - q[1]);
+      sepNow = sepNow === null ? d : Math.min(sepNow, d);
+      const hit = d < 5;
+      s += `<circle cx="${qp[0].toFixed(1)}" cy="${qp[1].toFixed(1)}" r="${(5 * k).toFixed(1)}" fill="${hit ? 'color-mix(in srgb,var(--red) 30%,transparent)' : 'none'}" stroke="${hit ? 'var(--red)' : 'var(--orange)'}" stroke-width="${hit ? 2.6 : 1.4}" stroke-dasharray="${hit ? '' : '3 3'}"/>`;
+      s += `<circle cx="${qp[0].toFixed(1)}" cy="${qp[1].toFixed(1)}" r="4.5" fill="var(--orange)"/>`;
+    });
+    s += `<circle cx="${ep[0].toFixed(1)}" cy="${ep[1].toFixed(1)}" r="7" fill="var(--blue)" stroke="var(--card)" stroke-width="2"/>`;
+  }
+  svg.innerHTML = s;
+  document.getElementById('tlabel').textContent = 't = ' + t + ' s';
+  // facts panel
+  const [mn, tm] = showMove ? minSepUpTo(S, t) : [null, 0];
+  const fullMin = minSepUpTo(S, tEnd(S));
+  const areaMax = Math.max(...S.area_ratio);
+  const row = (a, b) => `<div><span>${a}</span><b>${b}</b></div>`;
+  document.getElementById('facts').innerHTML =
+    row('Start inside an enclosing circle', S.start_in_circle ? '<span class="bad">yes</span>' : 'no') +
+    row('Goal inside an enclosing circle', S.goal_in_circle ? '<span class="bad">yes</span>' : 'no') +
+    row('Circle planner finds a path', S.circle_path ? '<span class="good">yes</span>' : '<span class="bad">no</span>') +
+    row('Largest circle vs its polygon (area)', f1(areaMax) + '×') +
+    row('Straight line / exact shortest path', f1(S.straight_len) + ' / ' + f1(S.poly_len) + ' NM (+' + ((S.poly_len / S.straight_len - 1) * 100).toFixed(0) + '%)') +
+    row('Circle-planner path length', S.circle_len ? f1(S.circle_len) + ' NM (+' + ((S.circle_len / S.poly_len - 1) * 100).toFixed(0) + '% vs exact)' : '–') +
+    row('Corner turns on the exact path', S.corner_turns.length ? S.corner_turns.map(x => x.toFixed(0) + '°').join(', ') : 'none (a straight line)') +
+    row('Closest intruder on this whole flight', (fullMin[0] < 5 ? '<span class="bad">' : '<span>') + f1(fullMin[0]) + ' NM at t=' + fullMin[1] + ' s</span>') +
+    (showMove ? row('Closest so far / now', f1(mn) + ' / ' + f1(sepNow) + ' NM') : '');
+  document.getElementById('time').max = tEnd(S) + 30;
+  document.getElementById('time').value = t;
+}
+
+function build() { buildControls(); render(); }
+
+/* ---------------------------------------------------------------- play */
+function stop() { playing = false; clearInterval(timer); document.getElementById('play').textContent = 'Play'; }
+document.getElementById('play').onclick = () => {
+  if (playing) { stop(); return; }
+  const S = SC[idx];
+  if (t >= tEnd(S)) t = 0;
+  playing = true; document.getElementById('play').textContent = 'Pause';
+  timer = setInterval(() => { t += 5; if (t >= tEnd(SC[idx])) { t = tEnd(SC[idx]); stop(); } render(); }, 60);
+};
+document.getElementById('time').oninput = ev => { stop(); t = +ev.target.value; render(); };
+
+/* ---------------------------------------------------------------- reasons */
+function pick(pred) { const i = SC.findIndex(pred); return i < 0 ? 0 : i; }
+function preset(name) {
+  stop();
+  Object.assign(L, { poly: true, circ: true, straight: false, ppath: false, cpath: false, routes: false, turns: false });
+  t = 0; flyMode = 'poly';
+  if (name === 'r1') { idx = pick(s => s.start_in_circle || s.goal_in_circle); L.cpath = true; L.straight = true; }
+  if (name === 'r2') { idx = pick(s => s.start_in_circle || s.goal_in_circle); L.poly = false; }
+  if (name === 'r3') { idx = pick(s => s.poly_path_hits); L.circ = false; L.ppath = true; L.routes = true;
+    const S = SC[idx]; let best = Infinity, tb = 0;
+    for (let u = 0; u <= tEnd(S); u += 5) { const e = egoPos(S, u); for (const r of S.routes) { const q = intrPos(r, u), d = Math.hypot(e[0] - q[0], e[1] - q[1]); if (d < best) { best = d; tb = u; } } }
+    t = tb; }
+  if (name === 'r4') { idx = pick(s => s.corner_turns.some(x => x > 45)); L.circ = false; L.ppath = true; L.turns = true; L.straight = true; }
+  document.querySelectorAll('input[name=fly]').forEach(r => r.checked = (r.value === flyMode));
+  build();
+  document.getElementById('map').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+const REASONS = [
+  ['r1', 'Circles are the wrong shape.',
+   `The competition's obstacles are irregular polygons (3 to 8 vertices, stretched up to 2.5× in one direction). Wrapping each in its smallest enclosing circle makes it, in the median case, <b>${f1(ST.circle_to_polygon_area_ratio.median)}× bigger</b>. The scenario generator normally keeps the start and goal 10 NM from the <i>polygons</i>, not from those circles, so in <b>${pct(ST.start_or_goal_inside_circle)}</b> of scenarios the start or goal is inside a circle and the method has nothing to plan from. The straight line crosses an obstacle in ${pct(ST.straight_line_hits_polygon)} of scenarios with the real shapes, but ${pct(ST.straight_line_hits_circle)} with circles.`],
+  ['r2', 'Even with exact shapes, the policy would never see them.',
+   `You are right that the obstacles are polygons, and a visibility-graph version of the idea (the same tangent-and-arc logic over polygon vertices) does work geometrically: that is the green path. But the observation hands the policy only a centroid, a bearing and a radius per obstacle. The polygon vertices live inside the environment. A planner running on what the policy sees is a planner on the circles, which is reason 1.`],
+  ['r3', 'The path is for a frozen world; the intruders move.',
+   `The article's graph assumes the obstacles never move. Our intruders are scripted aircraft on routes. I flew the exact shortest path at 150 m/s through ${ST.n_paths} generated scenarios with the intruders moving along their routes: in <b>${pct(ST.static_polygon_path_hits_intruder)}</b> of them the aircraft still comes within 5 NM of an intruder (a straight line: ${pct(ST.straight_line_hits_intruder)}). Solving the static part perfectly leaves most of the safety problem untouched.`],
+  ['r4', 'A path is not a flight.',
+   `A planned path has corners, and the aircraft cannot take them instantly: the environment accepts a heading change of at most 45° per 10 s decision, and BlueSky turns with a lag. The exact paths are fairly gentle (${pct(ST.share_with_any_corner)} have any corner at all, median worst corner ${f1(ST.median_max_corner_turn_deg)}°), but <b>${pct(ST.share_corner_over_45)}</b> have a corner over 45°, and the path grazes obstacle corners exactly. Following it would still need a controller and a safety margin, and the article has no notion of a turn-rate limit.`],
+  ['r5', 'The rules ask for a learned solution.',
+   `The competition requires the solution to be reinforcement-learning-based, not a hand-engineered classical controller or a pure search or optimizer. A tangent graph plus A* is exactly a search. Used as an input to the policy it puts a planner in the deployed loop; used only during training to shape the reward it is a different matter (see the green box below).`]
+];
+document.getElementById('reasons').innerHTML = REASONS.map((r, i) =>
+  `<div class="reason"><div class="n">${i + 1}</div><div><h3>${r[1]}</h3><p>${r[2]}</p></div>${r[0] === 'r5' ? '' : `<button class="btn" onclick="preset('${r[0]}')">Show me</button>`}</div>`).join('');
+document.querySelector('.reason:last-child').style.borderBottom = '0';
+
+/* ---------------------------------------------------------------- numbers table */
+document.getElementById('numtable').innerHTML =
+  '<tr><th>measure (' + ST.n_scenarios + ' generated scenarios, seed 42)</th><th>exact polygons</th><th>enclosing circles</th></tr>' +
+  `<tr><td>Straight start→goal line crosses an obstacle</td><td>${pct(ST.straight_line_hits_polygon)}</td><td>${pct(ST.straight_line_hits_circle)}</td></tr>` +
+  `<tr><td>Obstacles on the straight line, on average</td><td>${ST.mean_obstacles_on_line_polygon.toFixed(2)}</td><td>${ST.mean_obstacles_on_line_circle.toFixed(2)}</td></tr>` +
+  `<tr><td>Start or goal inside an obstacle</td><td>${(ST.start_or_goal_inside_polygon * 100).toFixed(1)}%</td><td>${pct(ST.start_or_goal_inside_circle)}</td></tr>` +
+  `<tr><td>Scenarios with no path</td><td>${(ST.unreachable_polygon * 100).toFixed(1)}%</td><td>${pct(ST.unreachable_circle)}</td></tr>` +
+  `<tr><td>Median detour vs straight line (where a path exists)</td><td>+${((ST.detour_ratio_polygon.median - 1) * 100).toFixed(1)}%</td><td>+${((ST.detour_ratio_circle.median - 1) * 100).toFixed(1)}%</td></tr>` +
+  `<tr><td>90th-percentile detour (where a path exists)</td><td>+${((ST.detour_ratio_polygon.p90 - 1) * 100).toFixed(0)}%</td><td>+${((ST.detour_ratio_circle.p90 - 1) * 100).toFixed(0)}%</td></tr>` +
+  `<tr><td>Static best path still comes within 5 NM of an intruder</td><td>${pct(ST.static_polygon_path_hits_intruder)}</td><td>–</td></tr>`;
+document.getElementById('method').innerHTML =
+  'Method: scenarios from the competition generator with the single-agent defaults (5 obstacles, 10 intruders), seed 42. Shortest paths use a visibility graph over polygon vertices (circles drawn as 24-gons, slightly conservative). ' +
+  'The intruder test is plain kinematics: the aircraft flies the path at 150 m/s, intruders follow their routes at constant speed and keep their last heading afterwards, which is an assumption about BlueSky\'s behaviour that was not checked against the simulator. ' +
+  'The circle detour figures only cover the scenarios where a circle path exists, which is the minority.';
+
+build();
+</script>
+</body>
+</html>

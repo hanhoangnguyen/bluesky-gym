@@ -1,0 +1,1066 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Actor-critic on the competition environment</title>
+<style>
+:root{
+  --bg:#fbfaf7; --fg:#1f2328; --muted:#5d6670; --card:#ffffff; --line:#e3e1db; --soft:#f2f0ea;
+  --blue:#0072B2; --orange:#E69F00; --green:#009E73; --red:#D55E00; --purple:#CC79A7; --sky:#56B4E9; --grey:#6b7280;
+  --ink:#1f2328; --shadow:0 1px 2px rgba(0,0,0,.05),0 4px 14px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#14161a; --fg:#e7e9ec; --muted:#9aa4ae; --card:#1c1f24; --line:#2c3036; --soft:#23272d;
+         --ink:#e7e9ec; --shadow:0 1px 2px rgba(0,0,0,.4); }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:0 20px}
+header.hero{padding:56px 0 28px}
+.eyebrow{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+h1{font-size:clamp(30px,5vw,46px);line-height:1.12;margin:10px 0 14px;letter-spacing:-.02em}
+.lead{font-size:19px;color:var(--muted);max-width:760px}
+nav.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+nav.top .wrap{display:flex;gap:4px;overflow-x:auto;padding:8px 20px;scrollbar-width:thin}
+nav.top a{white-space:nowrap;font-size:13.5px;color:var(--muted);text-decoration:none;padding:5px 10px;border-radius:999px}
+nav.top a:hover{background:var(--soft);color:var(--fg)}
+section{padding:46px 0 10px;scroll-margin-top:52px}
+h2{font-size:28px;letter-spacing:-.01em;margin:0 0 6px}
+h2 .n{color:var(--muted);font-weight:500;margin-right:8px}
+h3{font-size:18px;margin:26px 0 6px}
+p{margin:.5em 0 1em}
+.sub{color:var(--muted);max-width:760px}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9em}
+code{background:var(--soft);padding:1px 6px;border-radius:5px}
+pre{background:var(--soft);padding:14px 16px;border-radius:10px;overflow-x:auto;font-size:13.5px;line-height:1.5}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:18px}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:760px){.g2,.g3,.g4{grid-template-columns:1fr}}
+.stat{text-align:left}
+.stat b{display:block;font-size:30px;letter-spacing:-.02em;line-height:1.1}
+.stat span{font-size:13.5px;color:var(--muted)}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;background:var(--soft);color:var(--muted)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.tabs{display:inline-flex;background:var(--soft);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
+.tabs button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:13.5px;padding:6px 12px;border-radius:8px;cursor:pointer}
+.tabs button[aria-pressed=true]{background:var(--card);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.12);font-weight:600}
+button.btn{border:1px solid var(--line);background:var(--card);color:var(--fg);font:inherit;font-size:14px;padding:6px 14px;border-radius:9px;cursor:pointer}
+button.btn:hover{background:var(--soft)}
+button.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+label.ctl{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
+label.ctl input[type=range]{width:150px}
+.val{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;color:var(--fg);min-width:48px;display:inline-block}
+svg{display:block;max-width:100%;height:auto}
+svg text{font-family:inherit}
+.scene{background:var(--card);border:1px solid var(--line);border-radius:12px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.note{font-size:13.5px;color:var(--muted);border-left:3px solid var(--line);padding-left:12px;margin:12px 0}
+.callout{background:color-mix(in srgb,var(--orange) 14%,var(--card));border:1px solid color-mix(in srgb,var(--orange) 40%,var(--line));border-radius:12px;padding:12px 16px;font-size:15px}
+.callout.blue{background:color-mix(in srgb,var(--blue) 10%,var(--card));border-color:color-mix(in srgb,var(--blue) 35%,var(--line))}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
+td.k{font-weight:600;white-space:nowrap}
+.hl{background:color-mix(in srgb,var(--blue) 8%,transparent)}
+details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin:8px 0}
+details summary{cursor:pointer;font-weight:600}
+details p{margin:.6em 0 0;color:var(--muted)}
+.tree{font-size:14.5px}
+.tree .node{border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:var(--card);margin:6px 0}
+.tree .node.me{border-color:var(--blue);background:color-mix(in srgb,var(--blue) 9%,var(--card));font-weight:600}
+.tree .kids{margin-left:22px;border-left:2px solid var(--line);padding-left:14px}
+.tree small{color:var(--muted);font-weight:400}
+.bar{height:10px;border-radius:5px;background:var(--soft);position:relative;overflow:hidden}
+.bar>i{position:absolute;top:0;bottom:0}
+footer{padding:50px 0 70px;color:var(--muted);font-size:14px}
+.kbd{font-size:12px;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 5px}
+.tt{position:absolute;pointer-events:none;background:var(--card);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);padding:6px 9px;font-size:12.5px;white-space:nowrap}
+</style>
+</head>
+<body>
+
+<header class="hero"><div class="wrap">
+  <div class="eyebrow">BlueSky-Gym competition &middot; policy-gradient testbed</div>
+  <h1>Teaching an aircraft to fly to a goal, one small update at a time</h1>
+  <p class="lead">We took the one-step actor-critic from the Dubins-car work (Sutton &amp; Barto, chapter&nbsp;13) and
+  pointed it at the competition's own flight simulator, in three small scenarios. This page lets you
+  <b>watch</b> the trained aircraft, <b>poke</b> the learned policy, and <b>play with</b> every piece of the method.</p>
+  <div class="grid g4" style="margin-top:26px">
+    <div class="card stat"><b>3</b><span>staged scenarios: goal, + obstacle, + crossing intruder</span></div>
+    <div class="card stat"><b>100%</b><span>goal reached, on 100 random scenarios at every stage</span></div>
+    <div class="card stat"><b>0%</b><span>obstacle entries in stage 2 (after fixing the reward)</span></div>
+    <div class="card stat"><b>7%</b><span>stage&nbsp;3 scenarios that still lose separation (was 12%)</span></div>
+  </div>
+  <p class="note" style="margin-top:22px">Honest scope: everything here is at <b>half the competition's size</b>, with one obstacle and one
+  intruder (the competition has five and ten). These numbers are not comparable to anyone's competition score.</p>
+</div></header>
+
+<nav class="top"><div class="wrap">
+  <a href="#task">1 The task</a><a href="#stages">2 Stages</a><a href="#replay">3 Watch it fly</a>
+  <a href="#loop">4 The loop</a><a href="#policy">5 The policy</a><a href="#tiles">6 Features</a>
+  <a href="#update">7 Learning rule</a><a href="#reward">8 Reward</a><a href="#probe">9 Probe the policy</a>
+  <a href="#results">10 Results</a><a href="#dubins">11 vs. Dubins</a><a href="#family">12 Method family</a><a href="#next">13 What's missing</a>
+</div></nav>
+
+<main class="wrap">
+
+<!-- ============================================================ 1 -->
+<section id="task">
+  <h2><span class="n">1</span>The competition task</h2>
+  <p class="sub">Fly an A320 to a goal. Stay clear of other aircraft, restricted areas and the edge of the sector. You only command <b>heading and speed</b>; BlueSky does the flying.</p>
+  <div class="grid g3" style="margin-top:14px">
+    <div class="card"><h3 style="margin-top:0">Rules of the world</h3>
+      <p style="margin:0">Goal captured within <b>5&nbsp;km</b>. Loss of separation below <b>5&nbsp;NM</b>. Episode truncates at <b>3000&nbsp;s</b>. Nothing but reaching the goal ends an episode early: hitting an obstacle or another aircraft is only <i>counted</i>.</p></div>
+    <div class="card"><h3 style="margin-top:0">What is scored</h3>
+      <p style="margin:0">Goal reached &middot; intrusions (events &amp; seconds) &middot; restricted-area entries &middot; sector exits &middot; flight time. Reported over the first 1000 episodes of seed&nbsp;42.</p></div>
+    <div class="card"><h3 style="margin-top:0">What you design</h3>
+      <p style="margin:0">The observation, the reward, the action mapping &mdash; and the algorithm, as long as it is reinforcement learning. The scoring layer and the world's rules are fixed.</p></div>
+  </div>
+  <div class="grid g2" style="margin-top:16px">
+    <div class="card"><h3 style="margin-top:0">Single-agent track</h3>
+      <p style="margin:0">One aircraft, <b>10 scripted intruders</b> on fixed routes, 5 obstacles. The testing ground.</p></div>
+    <div class="card"><h3 style="margin-top:0">Multi-agent track</h3>
+      <p style="margin:0"><b>10 learning aircraft</b>, 5 obstacles, no scripted traffic. The high-value scoring goal.</p></div>
+  </div>
+</section>
+
+<!-- ============================================================ 2 -->
+<section id="stages">
+  <h2><span class="n">2</span>Three small scenarios, each adding one difficulty</h2>
+  <p class="sub">Instead of attacking the full task, we climb toward it. Each stage adds exactly one new thing the agent has to learn.</p>
+  <div class="row" style="margin:12px 0"><span class="mono" style="color:var(--muted)">show:</span>
+    <div class="tabs" id="stageMode"><button data-m="canonical" aria-pressed="true">canonical layout</button><button data-m="random" aria-pressed="false">a random training scenario</button></div></div>
+  <div class="grid g3" id="stageCards"></div>
+  <div class="legend">
+    <span><i style="background:var(--blue)"></i>start (arrow = initial heading)</span>
+    <span><i style="background:var(--green)"></i>goal (5&nbsp;km capture)</span>
+    <span><i style="background:var(--grey)"></i>restricted area</span>
+    <span><i style="background:var(--orange)"></i>intruder route (arrow = direction)</span>
+  </div>
+  <p class="note">Drawn at <b>scale 0.5</b>: a 60&nbsp;NM sector. The competition's sectors are roughly twice as wide, with larger and more numerous obstacles. We shrank the geometry because BlueSky costs about a millisecond per simulated second, so smaller scenes are simply shorter episodes.</p>
+</section>
+
+<!-- ============================================================ 3 -->
+<section id="replay">
+  <h2><span class="n">3</span>Watch the trained aircraft fly</h2>
+  <p class="sub">These are real BlueSky rollouts of the trained policies (a position every 10 simulated seconds). Pick a stage and a case, then press play. The first case is a controller that steers at the goal and <i>ignores everything else</i>: it shows what the learned policy is avoiding.</p>
+  <div class="card">
+    <div class="row" style="justify-content:space-between;margin-bottom:10px">
+      <div class="tabs" id="rpStage"></div>
+      <div class="tabs" id="rpCase"></div>
+    </div>
+    <div class="grid" style="grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:18px;align-items:start" id="rpGrid">
+      <div><svg id="rpSvg" class="scene" viewBox="0 0 100 100" role="img" aria-label="Replay of a trained rollout"></svg></div>
+      <div>
+        <div class="row" style="margin-bottom:10px">
+          <button class="btn primary" id="rpPlay">&#9654; Play</button>
+          <button class="btn" id="rpRestart">&#8634; Restart</button>
+          <label class="ctl">speed <input type="range" id="rpSpeed" min="1" max="8" value="3"></label>
+        </div>
+        <input type="range" id="rpScrub" min="0" max="100" value="0" style="width:100%" aria-label="Time">
+        <div id="rpInfo" style="margin-top:14px"></div>
+      </div>
+    </div>
+  </div>
+  <style>@media(max-width:760px){#rpGrid{grid-template-columns:1fr!important}}</style>
+  <p class="note">Violations here are re-detected from the 10&nbsp;s samples, so very brief ones can differ slightly from the simulator's own 1&nbsp;s count shown in the final verdict.</p>
+</section>
+
+<!-- ============================================================ 4 -->
+<section id="loop">
+  <h2><span class="n">4</span>The loop: what happens every 10 seconds</h2>
+  <p class="sub">Only the left half learns. Step through one decision.</p>
+  <div class="card">
+    <svg id="loopSvg" viewBox="0 0 900 360" role="img" aria-label="The agent-environment loop"></svg>
+    <div class="row" style="margin-top:10px;justify-content:space-between">
+      <div class="row"><button class="btn" id="loopPrev">&larr; Back</button><button class="btn primary" id="loopNext">Next step &rarr;</button>
+        <span class="pill" id="loopCount">step 1 of 6</span></div>
+    </div>
+    <p id="loopText" style="margin:12px 0 0;min-height:3.3em"></p>
+  </div>
+</section>
+
+<!-- ============================================================ 5 -->
+<section id="policy">
+  <h2><span class="n">5</span>The policy is a bell curve over the action</h2>
+  <p class="sub">For each state the agent outputs a mean <code>&mu;(s)</code> and a width <code>&sigma;(s)</code>. It then <i>samples</i> its heading command from that bell. The command <code>a</code> means: turn by <code>a &times; 45&deg;</code> from the current heading (positive = right), clipped to &plusmn;1.</p>
+  <div class="card">
+    <div class="grid" style="grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:18px;align-items:center" id="gGrid">
+      <svg id="gSvg" viewBox="0 0 560 285" role="img" aria-label="Gaussian policy"></svg>
+      <div>
+        <label class="ctl">mean &mu; <input type="range" id="gMu" min="-1.5" max="1.5" step="0.05" value="0.45"><span class="val" id="gMuV"></span></label>
+        <label class="ctl" style="margin-top:6px">width &sigma; <input type="range" id="gSg" min="0.05" max="0.8" step="0.01" value="0.5"><span class="val" id="gSgV"></span></label>
+        <div class="row" style="margin-top:12px"><button class="btn primary" id="gSample">Sample an action</button><button class="btn" id="gClear">Clear</button></div>
+        <svg id="gAc" viewBox="0 0 220 120" style="margin-top:10px" role="img" aria-label="Resulting heading"></svg>
+      </div>
+    </div>
+    <p class="note" style="margin-bottom:0">Early in training &sigma; is wide (try 0.5): the aircraft tries many headings. Later it narrows (try 0.1): nearly deterministic. Nothing forces that. Noisy steering costs reward, so the gradient narrows it.</p>
+  </div>
+  <style>@media(max-width:760px){#gGrid{grid-template-columns:1fr!important}}</style>
+</section>
+
+<!-- ============================================================ 6 -->
+<section id="tiles">
+  <h2><span class="n">6</span>Features: how a state becomes numbers</h2>
+  <p class="sub">The policy and the critic are <i>linear</i> in a long vector <code>x(s)</code> that is mostly zeros. <b>Tile coding</b> builds it: several shifted grids lie over the input space, and a state lights up exactly one tile in each. Drag the point.</p>
+  <div class="card">
+    <div class="grid" style="grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:18px;align-items:start" id="tGrid">
+      <svg id="tSvg" viewBox="0 0 420 420" class="scene" style="touch-action:none;cursor:crosshair" role="img" aria-label="Tile coding"></svg>
+      <div>
+        <div class="row"><span class="mono" style="color:var(--muted)">number of grids</span><div class="tabs" id="tNTabs"></div></div>
+        <div id="tInfo" style="margin-top:14px;font-size:14.5px"></div>
+        <p class="note">Each grid is the same size but shifted a little, so their overlap is finer than any single tile. With 1 grid the picture is blocky; with 8 (what we use) the active region shrinks to a small neighbourhood around the point.</p>
+      </div>
+    </div>
+    <p style="margin:6px 0 0"><b>In our code</b> the groups are: <i>goal</i> (distance, bearing) &middot; <i>obstacle</i> (clearance, bearing) &middot; <i>obstacle + goal</i> &middot; <i>intruder</i> (distance, bearing, aspect) &middot; <i>closest approach</i> (time and miss distance). Every angle is relative to the aircraft's own heading, so "steer toward the goal" is learned once and works anywhere &mdash; the sector's shape changes every episode.</p>
+  </div>
+  <style>@media(max-width:760px){#tGrid{grid-template-columns:1fr!important}}</style>
+</section>
+
+<!-- ============================================================ 7 -->
+<section id="update">
+  <h2><span class="n">7</span>The learning rule: one update, in slow motion</h2>
+  <p class="sub">After every step the critic compares what happened to what it predicted. That surprise is the <b>TD error</b> <code>&delta; = R + v(S') &minus; v(S)</code>. The actor then moves its bell toward the action it tried if <code>&delta;</code> is positive, away from it if negative.</p>
+  <div class="card">
+    <div class="grid" style="grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:18px;align-items:center" id="uGrid">
+      <svg id="uSvg" viewBox="0 0 560 300" role="img" aria-label="One actor update"></svg>
+      <div>
+        <label class="ctl">action tried <i>a</i> <input type="range" id="uA" min="-1.2" max="1.2" step="0.05" value="0.7"><span class="val" id="uAV"></span></label>
+        <label class="ctl" style="margin-top:6px">TD error &delta; <input type="range" id="uD" min="-2" max="2" step="0.05" value="1"><span class="val" id="uDV"></span></label>
+        <div id="uInfo" style="margin-top:14px;font-size:14.5px"></div>
+      </div>
+    </div>
+    <pre style="margin-bottom:0">&mu;  &larr; &mu;  + &alpha;<sub>&mu;</sub> &middot; &delta; &middot; (a &minus; &mu;)
+log &sigma; &larr; log &sigma; + &alpha;<sub>&sigma;</sub> &middot; &delta; &middot; ((a&minus;&mu;)&sup2;/&sigma;&sup2; &minus; 1)        &alpha;<sub>&mu;</sub>=0.3, &alpha;<sub>&sigma;</sub>=0.02</pre>
+  </div>
+  <p class="note">This is the net effect of one update on one state's &mu; and &sigma;; in the real code the change is spread over the ~8&ndash;48 active tiles. Try a positive &delta; with an action far from &mu;: the bell slides toward it. With a negative &delta; it slides away. The width update widens the bell when an unusual action turns out well, and narrows it when it turns out badly.</p>
+  <style>@media(max-width:760px){#uGrid{grid-template-columns:1fr!important}}</style>
+</section>
+
+<!-- ============================================================ 8 -->
+<section id="reward">
+  <h2><span class="n">8</span>The reward, and the lesson about penalties</h2>
+  <p class="sub">The agent only ever optimises the reward we write. Per decision step (in seconds-equivalent; the code divides by 100):</p>
+  <pre>reward = &minus;(seconds flown)                  every second costs 1
+       + (distance closed) / speed          progress toward the goal (potential-based shaping)
+       + 500 if the goal is reached
+       &minus; 1 &times; (seconds in a restricted area, outside the sector, or in loss of separation)
+       &minus; E &times; (new violation events)            E = the "event penalty"</pre>
+  <p>The progress term is <b>potential-based shaping</b>: it gives feedback on every step and, with &gamma;&nbsp;=&nbsp;1, provably does not change which policy is best. The violation terms come straight from the competition's own scored metrics.</p>
+  <div class="card">
+    <h3 style="margin-top:0">Would the agent clip the obstacle corner?</h3>
+    <p class="sub" style="margin-top:0">Drag the sliders. The agent picks whichever option has the better (less negative) total. The defaults are illustrative: the detour is roughly what the canonical layout cost (535 s vs. 462 s), the 15 s inside is a guess.</p>
+    <div class="grid g2" style="gap:18px">
+      <div>
+        <label class="ctl">event penalty <i>E</i> <input type="range" id="rE" min="0" max="12" step="0.5" value="0.5"><span class="val" id="rEV"></span></label>
+        <label class="ctl" style="margin-top:6px">extra seconds to fly around <input type="range" id="rDet" min="0" max="150" step="5" value="75"><span class="val" id="rDetV"></span></label>
+        <label class="ctl" style="margin-top:6px">seconds a clip spends inside <input type="range" id="rIn" min="0" max="60" step="1" value="15"><span class="val" id="rInV"></span></label>
+      </div>
+      <div id="rOut"></div>
+    </div>
+  </div>
+  <div class="callout" style="margin-top:14px"><b>What actually happened.</b> Our first stage-2 run used <i>E&nbsp;=&nbsp;0.5</i>. The policy learned to clip the obstacle corner in <b>25%</b> of random scenarios, because a short clip cost less than the detour it saved. That is the reward working as written, not a bug. Raising <i>E</i> to <b>5</b> removed the clipping entirely (0%), at a cost of about 9 seconds of flight time.</div>
+</section>
+
+<!-- ============================================================ 9 -->
+<section id="probe">
+  <h2><span class="n">9</span>Probe the learned policy</h2>
+  <p class="sub">This runs the <b>actual trained weights</b> in your browser. You are the aircraft's eyes: <b>drag the goal, the obstacle and the intruder</b> and see what the policy would command <i>right now</i>. The blue arrow is its mean heading command; the pale wedge is &plusmn;&sigma;.</p>
+  <div class="card">
+    <div class="row" style="justify-content:space-between;margin-bottom:10px">
+      <div class="tabs" id="prStage"></div>
+      <div class="row">
+        <label class="ctl">obstacle radius <input type="range" id="prR" min="3" max="12" step="0.5" value="6"><span class="val" id="prRV"></span></label>
+        <label class="ctl">intruder heading <input type="range" id="prH" min="0" max="359" step="1" value="270"><span class="val" id="prHV"></span></label>
+      </div>
+    </div>
+    <div class="grid" style="grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:18px;align-items:start" id="prGrid">
+      <svg id="prSvg" viewBox="-45 -55 90 90" class="scene" style="touch-action:none" role="img" aria-label="Interactive policy probe"></svg>
+      <div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:4px">turn command &mu; (clipped to &plusmn;1)</div>
+        <div class="bar" style="height:14px"><i id="prBar"></i><i style="left:50%;width:2px;background:var(--muted)"></i></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted)"><span>&larr; left 45&deg;</span><span>straight</span><span>right 45&deg; &rarr;</span></div>
+        <div id="prOut" style="margin-top:14px"></div>
+      </div>
+    </div>
+    <p class="note" style="margin-bottom:0">The aircraft sits at the bottom, heading up. The policies were trained on scenes up to about 40&nbsp;NM across (obstacles 7&ndash;12&nbsp;NM wide), so values outside that are extrapolation: the tile features clip at the edge of what they saw. Stage&nbsp;3 is the policy with the closest-approach features. Try the intruder directly ahead and head-on (heading 180&deg;), then slide its heading.</p>
+  </div>
+  <style>@media(max-width:760px){#prGrid{grid-template-columns:1fr!important}}</style>
+</section>
+
+<!-- ============================================================ 10 -->
+<section id="results">
+  <h2><span class="n">10</span>How training went</h2>
+  <p class="sub">Each point is a greedy evaluation on 20 fixed random scenarios, so one scenario is 5 percentage points: read the trends, not the wiggles. Hover for values.</p>
+  <div class="card">
+    <div class="row" style="justify-content:space-between;margin-bottom:8px">
+      <div class="tabs" id="lcMetric"></div>
+      <div class="row" id="lcToggles" style="gap:6px 14px"></div>
+    </div>
+    <div style="position:relative"><svg id="lcSvg" viewBox="0 0 860 340" role="img" aria-label="Learning curves"></svg><div id="lcTip" class="tt" style="display:none"></div></div>
+  </div>
+  <h3>Final numbers on 100 random scenarios</h3>
+  <p class="sub">Greedy policy, bars show 95% intervals. Goal reached was 100% in every case.</p>
+  <div class="card"><svg id="evSvg" viewBox="0 0 860 330" role="img" aria-label="Final evaluation"></svg>
+    <div class="legend" id="evLegend"></div></div>
+  <p class="note">The closest-approach (CPA) features halve the stage&nbsp;3 intrusion rate in our measurement, but the 95% intervals overlap (7&ndash;20% vs. 3&ndash;14%), so we call it an improvement we believe in, not one we have proven.</p>
+</section>
+
+<!-- ============================================================ 11 -->
+<section id="dubins">
+  <h2><span class="n">11</span>How this differs from the Dubins car</h2>
+  <p class="sub">The algorithm is the same. The world is not.</p>
+  <div class="grid g2">
+    <div class="card"><div class="pill">Dubins car</div><svg id="dubSvg" viewBox="0 0 300 300" style="margin-top:8px" role="img" aria-label="Dubins arena"></svg>
+      <p class="sub" style="margin:6px 0 0">One fixed arena, the same four obstacles every time. The agent can <i>memorise the map</i>.</p></div>
+    <div class="card"><div class="pill">Competition environment</div><svg id="cmpSvg" viewBox="0 0 300 300" style="margin-top:8px" role="img" aria-label="Competition scene"></svg>
+      <p class="sub" style="margin:6px 0 0">A different layout every episode, with moving traffic. The agent must learn a <i>rule</i>.</p></div>
+  </div>
+  <div class="card" style="margin-top:16px;overflow-x:auto"><table>
+    <tr><th></th><th>Dubins car</th><th>CompetitionEnv + BlueSky</th></tr>
+    <tr><td class="k">Dynamics</td><td>hand-written kinematics, instant steering</td><td>A320 flight model: turn lag, speed hold, autopilot</td></tr>
+    <tr><td class="k">What the agent sees</td><td>its own absolute pose <code>(x, y, &theta;)</code></td><td><b>relative</b> quantities only: goal, nearest obstacle, nearest intruder</td></tr>
+    <tr><td class="k">Action</td><td>steering rate</td><td>a heading <i>command</i> relative to the current heading, held 10&nbsp;s</td></tr>
+    <tr><td class="k">Decision rate</td><td>every 0.1&nbsp;s (~200 steps)</td><td>every 10&nbsp;s (~50&ndash;100 steps)</td></tr>
+    <tr><td class="k">World</td><td>one fixed arena</td><td>new random sector, goal, obstacle <b>every episode</b></td></tr>
+    <tr><td class="k">Other agents</td><td>none</td><td>moving traffic (later: other learners)</td></tr>
+    <tr><td class="k">Collision</td><td><b>terminal</b>, &minus;10</td><td><b>not terminal</b>: counted, and penalised per second / per event</td></tr>
+    <tr><td class="k">Map features</td><td>absolute <code>(x, y, heading)</code> tiles learn "avoid <i>this</i> obstacle"</td><td>none: everything is relative to the aircraft</td></tr>
+    <tr><td class="k">Scoring</td><td>your own return</td><td>fixed objective metrics, independent of your reward</td></tr>
+  </table></div>
+  <div class="callout blue" style="margin-top:14px"><b>Unchanged:</b> Gaussian policy, one-step actor-critic, tile coding, potential-based shaping, &gamma;&nbsp;=&nbsp;1, and evaluating on a fixed set of random scenarios plus one fixed layout.</div>
+</section>
+
+<!-- ============================================================ 12 -->
+<section id="family">
+  <h2><span class="n">12</span>Where this sits among policy-gradient methods</h2>
+  <p class="sub">First, a clarification: what we built <b>is</b> a policy-gradient method. The contrast is between kinds of method, and between this implementation and the PPO the competition ships.</p>
+  <div class="grid g2" style="align-items:start">
+    <div class="card tree">
+      <div class="node">Reinforcement learning
+        <div class="kids">
+          <div class="node">Value-based <small>learn q(s,a), act greedily</small>
+            <div class="kids"><div class="node">Sarsa, Q-learning, DQN <small>&mdash; your gridworld work; needs discrete actions</small></div></div></div>
+          <div class="node">Policy-gradient <small>learn the policy directly</small>
+            <div class="kids">
+              <div class="node">REINFORCE <small>waits for the episode's return: noisy</small></div>
+              <div class="node">+ baseline <small>subtract v(s) to cut noise</small></div>
+              <div class="node me">Actor-critic, one step <small>&larr; what we built</small></div>
+              <div class="node">Deep variants: A2C, PPO, SAC <small>same ideas, neural nets, batches</small></div>
+            </div></div>
+        </div></div>
+    </div>
+    <div class="card"><h3 style="margin-top:0">Why a critic?</h3>
+      <p style="margin:0">REINFORCE multiplies the gradient by the <i>whole episode's return</i>, so one good step is drowned in the noise of everything else. The critic gives a low-noise "better or worse than expected" signal on <b>every step</b>, at the cost of a little bias.</p>
+      <h3>Why not Sarsa?</h3>
+      <p style="margin:0">Our heading command is continuous. Value-based methods want a small list of actions; a policy distribution can be sampled directly.</p></div>
+  </div>
+  <div class="card" style="margin-top:16px;overflow-x:auto"><table>
+    <tr><th></th><th>Our actor-critic</th><th>PPO (the competition's example)</th></tr>
+    <tr><td class="k">Function approximator</td><td class="hl">linear on hand-built tile-coded features</td><td>neural network on the raw observation</td></tr>
+    <tr><td class="k">Input</td><td class="hl">a few engineered numbers (nearest obstacle, nearest intruder)</td><td>the full 131-number observation</td></tr>
+    <tr><td class="k">Update schedule</td><td class="hl">after <b>every step</b>, one sample</td><td>collect a batch, then several minibatch passes</td></tr>
+    <tr><td class="k">Step-size control</td><td class="hl">small fixed step sizes</td><td>clipped objective limits how far one update moves the policy</td></tr>
+    <tr><td class="k">Advantage</td><td class="hl">one-step TD error</td><td>GAE (blends many steps)</td></tr>
+    <tr><td class="k">Exploration noise</td><td class="hl">state-dependent &sigma;(s), learned</td><td>typically one learned noise level shared across states</td></tr>
+    <tr><td class="k">Strength</td><td class="hl">transparent: you can plot what it learned</td><td>handles any input; no feature design</td></tr>
+    <tr><td class="k">Weakness</td><td class="hl">features by hand; cannot see 10 intruders</td><td>opaque; needs far more data</td></tr>
+  </table></div>
+  <p class="note">The PPO column describes the settings in the competition guide and Stable-Baselines3's usual behaviour; we have not run it here. Both methods are <b>on-policy</b>: the policy is optimised for how it behaves with its own noise on, but we evaluate it without noise (the mean action). Neither guarantees the best policy; both climb to a local optimum.</p>
+</section>
+
+<!-- ============================================================ 13 -->
+<section id="next">
+  <h2><span class="n">13</span>What is still missing, and a self-check</h2>
+  <div class="grid g2" style="margin-top:12px">
+    <div class="card"><ol style="margin:0;padding-left:20px">
+      <li><b>Scale.</b> Half-size, 1 obstacle, 1 intruder, versus 5 and 10 and much larger sectors. Not evaluated on the seed-42 harness.</li>
+      <li><b>Ten intruders.</b> Our features see only the <i>nearest</i> one. Ten (and nine other learners) need richer features or a neural network. The update rule carries over unchanged.</li>
+      <li><b>Speed</b> is held fixed; the competition allows learning it.</li>
+      <li><b>Intrusions</b> are not at zero (about 7%), and obstacle and intruder avoidance are separate feature groups, so the policy cannot trade one against the other.</li>
+      <li><b>Multi-agent</b> is the stated high-value target and is not started.</li>
+      <li><b>Novelty and the report.</b> This is a clear, explainable baseline and a good teaching tool; by itself it is not an original contribution.</li>
+    </ol></div>
+    <div>
+      <details><summary>Why a Gaussian policy instead of a list of headings?</summary><p>The heading command is continuous, and a distribution can be sampled and differentiated directly.</p></details>
+      <details><summary>What is &delta;, and what does the actor do with it?</summary><p>How much better or worse the step went than the critic predicted. The actor makes the tried action more likely if &delta;&nbsp;&gt;&nbsp;0 and less likely if &delta;&nbsp;&lt;&nbsp;0.</p></details>
+      <details><summary>Why does &sigma; shrink?</summary><p>Noisy steering costs reward, so the gradient narrows it. Nothing forces it; the policy sharpens because sharpening pays.</p></details>
+      <details><summary>Why are all angles relative to the aircraft's heading?</summary><p>The scenario changes every episode, so a rule has to hold anywhere. Absolute coordinates would not transfer.</p></details>
+      <details><summary>Why doesn't the progress reward change the best policy?</summary><p>It is potential-based shaping with potential &minus;d/v: feedback on every step without changing which policy has the best return (exact for &gamma;&nbsp;=&nbsp;1).</p></details>
+      <details><summary>What caused the 25% obstacle entries?</summary><p>A penalty smaller than the detour cost: the agent followed the reward. A larger event penalty fixed it.</p></details>
+      <details><summary>What has to change to reach the competition?</summary><p>Handle 10 intruders and 5 obstacles (richer features or a neural network), learn speed, run at full scale, then multi-agent; and evaluate on the official seed-42 harness.</p></details>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer><div class="wrap">
+  Built by <code>policy_gradient/build_explainer.py</code> from the saved checkpoints and rollouts. Code and the long-form write-up live in <code>policy_gradient/</code> (<code>THEORY.md</code>). The probe above runs the same tile coder and weights as <code>actor_critic.py</code>, ported to JavaScript.
+</div></footer>
+
+<script>
+const DATA = __DATA__;
+
+//#CORE-START
+const PI = Math.PI, NM = 1.852, OWN_SPEED = 150;
+function wrapAngle(a){ return Math.atan2(Math.sin(a), Math.cos(a)); }
+const clamp = (x, lo, hi) => Math.min(Math.max(x, lo), hi);
+
+class TileCoder {
+  constructor(lows, highs, bins, wrap, nTilings){
+    this.lows = lows; this.wrap = wrap; this.n = nTilings;
+    this.widths = lows.map((l, d) => (highs[d] - l) / bins[d]);
+    this.tiles = bins.map((b, d) => b + (wrap[d] ? 0 : 1));
+    this.offsets = [];
+    for (let k = 0; k < nTilings; k++){
+      this.offsets.push(lows.map((_, d) => ((k * (2 * d + 1) / nTilings) % 1)));
+    }
+    this.strides = lows.map((_, d) => this.tiles.slice(d + 1).reduce((a, b) => a * b, 1));
+    const per = this.tiles.reduce((a, b) => a * b, 1);
+    this.bases = Array.from({length: nTilings}, (_, k) => k * per);
+    this.size = nTilings * per;
+  }
+  cells(p, k){
+    return this.lows.map((l, d) => {
+      let c = Math.floor((p[d] - l) / this.widths[d] + this.offsets[k][d]);
+      const t = this.tiles[d];
+      return this.wrap[d] ? (((c % t) + t) % t) : clamp(c, 0, t - 1);
+    });
+  }
+  indices(p){
+    const out = [];
+    for (let k = 0; k < this.n; k++){
+      const c = this.cells(p, k);
+      let idx = this.bases[k];
+      for (let d = 0; d < c.length; d++) idx += c[d] * this.strides[d];
+      out.push(idx);
+    }
+    return out;
+  }
+}
+
+const FAR_NM = 60;
+const GROUP_SPECS = {
+  goal:          {lows:[0,-PI],        highs:[160,PI],       bins:[16,12],  wrap:[false,true],       pt:s => [s.distGoalKm, s.goalBearing]},
+  obstacle:      {lows:[-5,-PI],       highs:[50,PI],        bins:[11,12],  wrap:[false,true],       pt:s => s.obstacle ? [s.obstacle[0], s.obstacle[1]] : [FAR_NM, 0]},
+  obstacleJoint: {lows:[-PI,-PI,-5],   highs:[PI,PI,40],     bins:[8,8,5],  wrap:[true,true,false],  pt:s => { const o = s.obstacle || [FAR_NM, 0]; return [s.goalBearing, o[1], o[0]]; }},
+  intruder:      {lows:[0,-PI,-PI],    highs:[80,PI,PI],     bins:[8,8,8],  wrap:[false,true,true],  pt:s => s.intruder ? s.intruder.slice(0, 3) : [FAR_NM + 20, 0, PI]},
+  cpa:           {lows:[0,-15],        highs:[400,15],       bins:[10,15],  wrap:[false,false],      pt:s => s.intruder ? [s.intruder[3], s.intruder[4]] : [400, 15]},
+  cpaJoint:      {lows:[0,-15,-PI],    highs:[400,15,PI],    bins:[8,10,8], wrap:[false,false,true], pt:s => { const c = s.intruder ? [s.intruder[3], s.intruder[4]] : [400, 15]; return [c[0], c[1], s.goalBearing]; }},
+};
+
+function makeFeatures(stage, cpa, nTilings = 8){
+  const names = ['goal'];
+  if (stage >= 2) names.push('obstacle', 'obstacleJoint');
+  if (stage >= 3){ names.push('intruder'); if (cpa) names.push('cpa', 'cpaJoint'); }
+  const coders = names.map(n => { const g = GROUP_SPECS[n]; return {pt: g.pt, coder: new TileCoder(g.lows, g.highs, g.bins, g.wrap, nTilings)}; });
+  let off = 0; const offsets = [];
+  for (const c of coders){ offsets.push(off); off += c.coder.size; }
+  return {names, coders, offsets, size: off, nActive: coders.length * nTilings,
+    indices(state){ const out = []; coders.forEach((c, i) => { for (const ix of c.coder.indices(c.pt(state))) out.push(ix + offsets[i]); }); return out; }};
+}
+
+function policyAt(feat, mu, sigma, state){
+  const idx = feat.indices(state);
+  let m = 0, ls = 0;
+  for (const i of idx){ m += mu[i]; ls += sigma[i]; }
+  ls = clamp(ls, Math.log(0.05), 0);
+  return {mu: m, sigma: Math.exp(ls), idx};
+}
+
+// State from an egocentric scene: x to the right, y ahead (nautical miles); the aircraft is at the origin heading up.
+function stateFromScene(sc){
+  const s = {distGoalKm: Math.hypot(sc.goal[0], sc.goal[1]) * NM, goalBearing: Math.atan2(sc.goal[0], sc.goal[1]), obstacle: null, intruder: null};
+  if (sc.obstacle){
+    const d = Math.hypot(sc.obstacle.x, sc.obstacle.y);
+    s.obstacle = [d - sc.obstacle.r, Math.atan2(sc.obstacle.x, sc.obstacle.y)];
+  }
+  if (sc.intruder){
+    const rx = sc.intruder.y * 1852, ry = sc.intruder.x * 1852;          // body frame, metres: ahead, right
+    const h = sc.intruder.hdg * PI / 180, spd = sc.intruder.speed;
+    const vx = spd * Math.cos(h) - OWN_SPEED, vy = spd * Math.sin(h);     // relative velocity, body frame
+    const bearing = Math.atan2(ry, rx);
+    const track = Math.atan2(vy, vx);
+    const aspect = wrapAngle(track - (bearing + PI));
+    const v2 = vx * vx + vy * vy;
+    const tcpa = v2 > 1e-9 ? Math.max(-(rx * vx + ry * vy) / v2, 0) : 0;
+    const cx = rx + vx * tcpa, cy = ry + vy * tcpa;
+    const dcpa = Math.sign(cy || 1) * Math.hypot(cx, cy) / 1000 / NM;
+    s.intruder = [Math.hypot(rx, ry) / 1852, bearing, aspect, tcpa, dcpa];
+  }
+  return s;
+}
+//#CORE-END
+
+/* ----------------------------------------------------------------- helpers */
+const $ = (s, r = document) => r.querySelector(s);
+const SVGNS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs = {}, parent = null, text = null){
+  const e = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text !== null) e.textContent = text;
+  if (parent) parent.appendChild(e);
+  return e;
+}
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function tabs(container, items, current, onPick){
+  container.innerHTML = '';
+  items.forEach(it => {
+    const b = document.createElement('button');
+    b.textContent = it.label; b.dataset.v = it.value;
+    b.setAttribute('aria-pressed', String(it.value === current));
+    b.onclick = () => { [...container.children].forEach(c => c.setAttribute('aria-pressed', String(c === b))); onPick(it.value); };
+    container.appendChild(b);
+  });
+}
+function pointInPoly(p, poly){
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++){
+    const [xi, yi] = poly[i], [xj, yj] = poly[j];
+    if (((yi > p[1]) !== (yj > p[1])) && (p[0] < (xj - xi) * (p[1] - yi) / (yj - yi) + xi)) inside = !inside;
+  }
+  return inside;
+}
+function polyBounds(g){
+  const xs = [], ys = [];
+  g.sector.forEach(p => { xs.push(p[0]); ys.push(p[1]); });
+  g.routes.forEach(r => r.forEach(p => { xs.push(p[0]); ys.push(p[1]); }));
+  const pad = 4;
+  return {x0: Math.min(...xs) - pad, x1: Math.max(...xs) + pad, y0: Math.min(...ys) - pad, y1: Math.max(...ys) + pad};
+}
+function planeIcon(parent, color, scale = 1){
+  const g = el('g', {}, parent);
+  el('path', {d: 'M0,-5 L3.4,4.2 L0,2.2 L-3.4,4.2 Z', fill: color, stroke: 'var(--card)', 'stroke-width': .5, transform: `scale(${scale})`}, g);
+  return g;
+}
+// draw a scenario geometry (NM coordinates, y up) into an svg; returns the flip helper
+function drawGeometry(svg, g, opts = {}){
+  const b = polyBounds(g), w = b.x1 - b.x0, h = b.y1 - b.y0;
+  svg.setAttribute('viewBox', `${b.x0} ${-b.y1} ${w} ${h}`);
+  svg.innerHTML = '';
+  el('polygon', {points: g.sector.map(p => `${p[0]},${-p[1]}`).join(' '), fill: 'none', stroke: 'var(--ink)', 'stroke-width': .5}, svg);
+  g.obstacles.forEach(o => el('polygon', {points: o.map(p => `${p[0]},${-p[1]}`).join(' '), fill: 'var(--grey)', opacity: .75}, svg));
+  g.routes.forEach(r => {
+    el('polyline', {points: r.map(p => `${p[0]},${-p[1]}`).join(' '), fill: 'none', stroke: 'var(--orange)', 'stroke-width': .5, 'stroke-dasharray': '1 1.4'}, svg);
+    const [x0, y0] = r[0], [x1, y1] = r[r.length - 1];
+    const ax = x0 + .8 * (x1 - x0), ay = y0 + .8 * (y1 - y0);
+    const ang = Math.atan2(x1 - ax, y1 - ay) * 180 / PI;
+    const a = el('g', {transform: `translate(${x1} ${-y1}) rotate(${ang})`}, svg);
+    el('path', {d: 'M0,0 L-1.4,3 L1.4,3 Z', fill: 'var(--orange)'}, a);
+  });
+  el('circle', {cx: g.goal[0], cy: -g.goal[1], r: 5 / NM, fill: 'var(--green)', opacity: .9}, svg);
+  el('circle', {cx: g.start[0], cy: -g.start[1], r: 1.1, fill: 'var(--blue)'}, svg);
+  const hr = g.heading * PI / 180;
+  const tx = g.start[0] + 7 * Math.sin(hr), ty = g.start[1] + 7 * Math.cos(hr);
+  el('line', {x1: g.start[0], y1: -g.start[1], x2: tx, y2: -ty, stroke: 'var(--blue)', 'stroke-width': .7}, svg);
+  const head = el('g', {transform: `translate(${tx} ${-ty}) rotate(${g.heading})`}, svg);
+  el('path', {d: 'M0,-1.5 L1.3,1 L-1.3,1 Z', fill: 'var(--blue)'}, head);
+  return b;
+}
+
+/* ---------------------------------------------------------------- 2 stages */
+(function(){
+  const host = $('#stageCards');
+  const titles = {1: ['Stage 1', 'goal only', 'learn: steer toward the goal'],
+                  2: ['Stage 2', '+ one obstacle', 'learn: steer away from it'],
+                  3: ['Stage 3', '+ one crossing intruder', 'learn: time a detour']};
+  const svgs = {};
+  [1, 2, 3].forEach(s => {
+    const c = document.createElement('div'); c.className = 'card';
+    c.innerHTML = `<div class="pill">${titles[s][0]}</div><h3 style="margin:8px 0 2px">${titles[s][1]}</h3><svg viewBox="0 0 100 100"></svg><div class="sub" style="font-size:14px">${titles[s][2]}</div>`;
+    host.appendChild(c); svgs[s] = c.querySelector('svg');
+  });
+  function draw(mode){ [1, 2, 3].forEach(s => drawGeometry(svgs[s], DATA.scenarios[s][mode])); }
+  tabs($('#stageMode'), [{label: 'canonical layout', value: 'canonical'}, {label: 'a random training scenario', value: 'random'}], 'canonical', draw);
+  draw('canonical');
+})();
+
+/* ---------------------------------------------------------------- 3 replay */
+(function(){
+  const svg = $('#rpSvg');
+  let stage = 3, ci = 1, step = 0, playing = false, timer = null, rollout = null;
+  const names = ['steer at goal only (no avoidance)', 'learned: canonical layout', 'learned: random scenario A', 'learned: random scenario B'];
+  tabs($('#rpStage'), [1, 2, 3].map(s => ({label: 'Stage ' + s, value: s})), stage, v => { stage = v; load(); });
+  tabs($('#rpCase'), names.map((n, i) => ({label: ['no avoidance', 'canonical', 'random A', 'random B'][i], value: i})), ci, v => { ci = v; load(); });
+  const scrub = $('#rpScrub');
+  function load(){
+    stop(); rollout = DATA.rollouts[stage][ci]; step = 0;
+    const g = rollout.geom; drawGeometry(svg, g);
+    scrub.max = rollout.agent.length - 1; scrub.value = 0;
+    // dynamic layers
+    el('g', {id: 'rpDyn'}, svg);
+    render();
+  }
+  function heading(i){
+    const a = rollout.agent;
+    if (i === 0) return rollout.geom.heading;
+    return Math.atan2(a[i][0] - a[i - 1][0], a[i][1] - a[i - 1][1]) * 180 / PI;
+  }
+  function render(){
+    const dyn = $('#rpDyn', svg); dyn.innerHTML = '';
+    const a = rollout.agent, it = rollout.intruder, g = rollout.geom;
+    // trail
+    el('polyline', {points: a.slice(0, step + 1).map(p => `${p[0]},${-p[1]}`).join(' '), fill: 'none', stroke: 'var(--blue)', 'stroke-width': .5}, dyn);
+    let sep = null, bad = false;
+    if (it.length){
+      const k = Math.min(step, it.length - 1);
+      el('polyline', {points: it.slice(0, k + 1).map(p => `${p[0]},${-p[1]}`).join(' '), fill: 'none', stroke: 'var(--orange)', 'stroke-width': .45}, dyn);
+      sep = Math.hypot(a[step][0] - it[k][0], a[step][1] - it[k][1]);
+      bad = sep < 5;
+      el('circle', {cx: it[k][0], cy: -it[k][1], r: 5, fill: bad ? 'var(--red)' : 'none', 'fill-opacity': .18, stroke: bad ? 'var(--red)' : 'var(--orange)', 'stroke-width': .35, 'stroke-dasharray': '1.2 1'}, dyn);
+      let hd = k === 0 ? Math.atan2(it[1][0] - it[0][0], it[1][1] - it[0][1]) * 180 / PI : Math.atan2(it[k][0] - it[k - 1][0], it[k][1] - it[k - 1][1]) * 180 / PI;
+      const gi = el('g', {transform: `translate(${it[k][0]} ${-it[k][1]}) rotate(${hd})`}, dyn); planeIcon(gi, 'var(--orange)', .5);
+    }
+    const ga = el('g', {transform: `translate(${a[step][0]} ${-a[step][1]}) rotate(${heading(step)})`}, dyn); planeIcon(ga, 'var(--blue)', .62);
+    // running checks on the 10 s samples
+    let inObs = false, outSec = false, secInObs = 0, secIntr = 0;
+    for (let i = 0; i <= step; i++){
+      const o = g.obstacles.some(poly => pointInPoly(a[i], poly));
+      if (o) secInObs += rollout.step_s;
+      if (it.length && Math.hypot(a[i][0] - it[Math.min(i, it.length - 1)][0], a[i][1] - it[Math.min(i, it.length - 1)][1]) < 5) secIntr += rollout.step_s;
+      if (i === step) inObs = o;
+    }
+    outSec = !pointInPoly(a[step], g.sector);
+    const dGoal = Math.hypot(a[step][0] - g.goal[0], a[step][1] - g.goal[1]) * NM;
+    const t = step * rollout.step_s, info = rollout.info, last = step === a.length - 1;
+    const flags = [];
+    if (info.restricted_area_events) flags.push(info.restricted_area_events + '&times; restricted area');
+    if (info.intrusion_events) flags.push(info.intrusion_events + '&times; intrusion');
+    if (info.sector_exit_events) flags.push(info.sector_exit_events + '&times; sector exit');
+    $('#rpInfo').innerHTML = `
+      <div style="font-weight:600;margin-bottom:6px">${names[ci]}</div>
+      <table style="font-size:14px">
+        <tr><td>time</td><td class="mono">${t} s</td></tr>
+        <tr><td>distance to goal</td><td class="mono">${dGoal.toFixed(1)} km</td></tr>
+        <tr><td>in a restricted area</td><td class="mono" style="color:${inObs ? 'var(--red)' : 'inherit'}">${inObs ? 'YES' : 'no'} <span style="color:var(--muted)">(${secInObs} s so far)</span></td></tr>
+        ${it.length ? `<tr><td>separation to intruder</td><td class="mono" style="color:${bad ? 'var(--red)' : 'inherit'}">${sep.toFixed(1)} NM ${bad ? '&mdash; TOO CLOSE' : ''} <span style="color:var(--muted)">(${secIntr} s so far)</span></td></tr>` : ''}
+        <tr><td>outside the sector</td><td class="mono">${outSec ? 'YES' : 'no'}</td></tr>
+      </table>
+      ${last ? `<div class="callout ${flags.length ? '' : 'blue'}" style="margin-top:10px">${info.waypoint_reached ? 'Reached the goal' : 'Missed the goal'} in <b>${info.flight_time.toFixed(0)} s</b> &mdash; ${flags.length ? '<b>' + flags.join(', ') + '</b>' : '<b>clean</b>'}</div>` : ''}`;
+  }
+  function tick(){ if (step < rollout.agent.length - 1){ step++; scrub.value = step; render(); } else stop(); }
+  function start(){
+    if (step >= rollout.agent.length - 1){ step = 0; }
+    playing = true; $('#rpPlay').innerHTML = '&#10074;&#10074; Pause';
+    timer = setInterval(tick, 1000 / (+$('#rpSpeed').value * 2.2));
+  }
+  function stop(){ playing = false; clearInterval(timer); $('#rpPlay').innerHTML = '&#9654; Play'; }
+  $('#rpPlay').onclick = () => playing ? stop() : start();
+  $('#rpRestart').onclick = () => { stop(); step = 0; scrub.value = 0; render(); start(); };
+  $('#rpSpeed').oninput = () => { if (playing){ stop(); start(); } };
+  scrub.oninput = () => { stop(); step = +scrub.value; render(); };
+  load();
+})();
+
+/* ---------------------------------------------------------------- 4 loop */
+(function(){
+  const svg = $('#loopSvg');
+  const boxes = {
+    feat: {x: 20, y: 30, w: 230, h: 100, c: '--sky', t: 'Features x(s)', b: ['tile-coded groups: goal,', 'obstacle, intruder']},
+    ac:   {x: 20, y: 215, w: 230, h: 105, c: '--blue', t: 'Actor + critic', b: ['policy N(&mu;(s), &sigma;(s)&sup2;)', 'value v(s) = w &middot; x(s)']},
+    td:   {x: 345, y: 262, w: 190, h: 70, c: '--purple', t: 'TD error &delta;', b: ['R + v(S\') &minus; v(S)']},
+    nav:  {x: 640, y: 30, w: 240, h: 100, c: '--orange', t: 'NavEnv adapter', b: ['1-D action, small state,', 'shaped reward']},
+    comp: {x: 640, y: 215, w: 240, h: 105, c: '--green', t: 'CompetitionEnv + BlueSky', b: ['scenario, metrics,', 'A320 flight model']},
+  };
+  const steps = [
+    {hi: ['comp', 'nav'], text: '<b>1. The world moves.</b> BlueSky flies the aircraft (and the intruder) for 10 simulated seconds. The competition environment records its scored metrics.'},
+    {hi: ['nav', 'feat'], text: '<b>2. The state arrives.</b> The adapter turns the simulator\'s observation into a few relative numbers (goal bearing, nearest obstacle, nearest intruder) and computes the shaped reward <i>R</i>.'},
+    {hi: ['feat', 'ac'], text: '<b>3. Features.</b> Tile coding turns the state into a long, mostly-zero vector x(s): a handful of active tiles.'},
+    {hi: ['ac'], text: '<b>4. The policy speaks.</b> &mu;(s) and &sigma;(s) are sums of a few weights. The agent <i>samples</i> a heading command a ~ N(&mu;, &sigma;&sup2;).'},
+    {hi: ['ac', 'nav', 'comp'], text: '<b>5. Act.</b> The adapter sends [a, 0] (heading change, speed held) to the competition environment, which commands BlueSky. Back to step 1 for the next 10 seconds.'},
+    {hi: ['td', 'ac'], text: '<b>6. Learn.</b> Using the reward <i>R</i> and the critic\'s predictions, compute &delta; = R + v(S\') &minus; v(S). Nudge the critic toward the truth and the actor toward better actions. This happens on <b>every</b> step.'},
+  ];
+  function arrow(x1, y1, x2, y2, mk){
+    return el('line', {x1, y1, x2, y2, 'stroke-width': 2, 'marker-end': 'url(#' + mk + ')'}, svg);
+  }
+  let cur = 0;
+  function draw(){
+    svg.innerHTML = '';
+    const defs = el('defs', {}, svg);
+    [['mkInk', css('--fg')], ['mkPur', css('--purple')], ['mkOff', css('--line')]].forEach(([id, col]) => {
+      const m = el('marker', {id, viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 6, markerHeight: 6, orient: 'auto'}, defs);
+      el('path', {d: 'M0,0 L10,5 L0,10 Z', fill: col}, m);
+    });
+    const hi = new Set(steps[cur].hi);
+    el('text', {x: 22, y: 18, 'font-size': 12, 'font-weight': 700, fill: css('--muted'), 'letter-spacing': '.06em'}, svg, 'WHAT WE LEARN');
+    el('text', {x: 642, y: 18, 'font-size': 12, 'font-weight': 700, fill: css('--muted'), 'letter-spacing': '.06em'}, svg, 'THE WORLD (NOT LEARNED)');
+    for (const k in boxes){
+      const b = boxes[k], on = hi.has(k), col = css(b.c);
+      el('rect', {x: b.x, y: b.y, width: b.w, height: b.h, rx: 12, fill: col, 'fill-opacity': on ? .22 : .07, stroke: col, 'stroke-width': on ? 3 : 1.4, opacity: on ? 1 : .6}, svg);
+      const t = el('text', {x: b.x + b.w / 2, y: b.y + 32, 'text-anchor': 'middle', 'font-size': 16, 'font-weight': 700, fill: css('--fg')}, svg); t.innerHTML = b.t;
+      b.b.forEach((line, i) => { const l = el('text', {x: b.x + b.w / 2, y: b.y + 56 + i * 20, 'text-anchor': 'middle', 'font-size': 13.5, fill: css('--muted')}, svg); l.innerHTML = line; });
+    }
+    const ink = css('--fg'), pur = css('--purple');
+    const act = (a, c) => a ? c : css('--line');
+    const s = cur;
+    // arrows with highlighting per step
+    const A = (x1, y1, x2, y2, on, c) => { const l = arrow(x1, y1, x2, y2, on ? (c === pur ? 'mkPur' : 'mkInk') : 'mkOff'); l.setAttribute('stroke-width', on ? 3 : 2); l.setAttribute('stroke', on ? c : css('--line')); };
+    A(640, 80, 250, 80, s === 1, ink);            // state + reward -> features
+    A(135, 130, 135, 215, s === 2, ink);          // x(s) -> actor
+    A(250, 240, 640, 105, s === 4 || s === 3, ink);   // action -> world
+    A(760, 130, 760, 215, s === 0 || s === 4, ink);    // nav <-> comp
+    A(345, 297, 252, 297, s === 5, pur);            // td -> actor
+    const lab = (x, y, t, on, anchor = 'middle') => el('text', {x, y, 'text-anchor': anchor, 'font-size': 13, fill: on ? css('--fg') : css('--muted'), 'font-weight': on ? 700 : 400}, svg, t);
+    lab(445, 72, 'state S′ and reward R', s === 1);
+    lab(160, 178, 'x(s)', s === 2, 'start');
+    lab(430, 150, 'sample action a ~ N(μ, σ²)', s === 3 || s === 4);
+    lab(772, 178, 'a / obs + metrics', s === 0 || s === 4, 'start');
+    lab(298, 288, 'update θ, w', s === 5);
+    $('#loopText').innerHTML = steps[cur].text;
+    $('#loopCount').textContent = `step ${cur + 1} of ${steps.length}`;
+  }
+  $('#loopNext').onclick = () => { cur = (cur + 1) % steps.length; draw(); };
+  $('#loopPrev').onclick = () => { cur = (cur + steps.length - 1) % steps.length; draw(); };
+  draw();
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', draw);
+})();
+
+/* ---------------------------------------------------------------- 5 gaussian */
+(function(){
+  const svg = $('#gSvg'), W = 560, H = 270, x0 = 40, x1 = 540, top = 18, base = 230;
+  const xs = a => x0 + (a + 2) / 4 * (x1 - x0);
+  let samples = [];
+  const mu = $('#gMu'), sg = $('#gSg');
+  const pdf = (a, m, s) => Math.exp(-.5 * ((a - m) / s) ** 2) / (s * Math.sqrt(2 * PI));
+  function gauss(){ let u = 0, v = 0; while (!u) u = Math.random(); v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * PI * v); }
+  function draw(){
+    const m = +mu.value, s = +sg.value;
+    $('#gMuV').textContent = m.toFixed(2); $('#gSgV').textContent = s.toFixed(2);
+    svg.innerHTML = '';
+    const ymax = Math.max(pdf(m, m, s), 1.2) * 1.08, ys = d => base - d / ymax * (base - top);
+    el('rect', {x: x0, y: top, width: xs(-1) - x0, height: base - top, fill: css('--soft')}, svg);
+    el('rect', {x: xs(1), y: top, width: x1 - xs(1), height: base - top, fill: css('--soft')}, svg);
+    el('text', {x: (x0 + xs(-1)) / 2, y: top + 16, 'text-anchor': 'middle', 'font-size': 12, fill: css('--muted')}, svg, 'clipped to −1');
+    el('text', {x: (xs(1) + x1) / 2, y: top + 16, 'text-anchor': 'middle', 'font-size': 12, fill: css('--muted')}, svg, 'clipped to +1');
+    let d = ''; for (let a = -2; a <= 2.0001; a += .02) d += (d ? 'L' : 'M') + xs(a).toFixed(1) + ',' + ys(pdf(a, m, s)).toFixed(1);
+    el('path', {d: d + `L${xs(2)},${base}L${xs(-2)},${base}Z`, fill: css('--blue'), 'fill-opacity': .15}, svg);
+    el('path', {d, fill: 'none', stroke: css('--blue'), 'stroke-width': 2.4}, svg);
+    el('line', {x1: xs(m), x2: xs(m), y1: top + 24, y2: base, stroke: css('--muted'), 'stroke-dasharray': '3 3'}, svg);
+    el('text', {x: xs(m), y: top + 36, 'text-anchor': 'middle', 'font-size': 12, fill: css('--muted')}, svg, 'μ');
+    el('line', {x1: x0, x2: x1, y1: base, y2: base, stroke: css('--grey')}, svg);
+    for (let a = -2; a <= 2; a += 1){ el('line', {x1: xs(a), x2: xs(a), y1: base, y2: base + 5, stroke: css('--grey')}, svg); el('text', {x: xs(a), y: base + 20, 'text-anchor': 'middle', 'font-size': 12, fill: css('--muted')}, svg, a > 0 ? '+' + a : String(a)); }
+    el('text', {x: (x0 + x1) / 2, y: base + 40, 'text-anchor': 'middle', 'font-size': 12.5, fill: css('--muted')}, svg, 'action a   (− = turn left, + = turn right)');
+    samples.forEach((a, i) => el('circle', {cx: xs(clamp(a, -2, 2)), cy: base - 6 - (i % 4) * 7, r: 4.2, fill: css('--orange'), stroke: css('--card'), 'stroke-width': 1}, svg));
+    // aircraft diagram
+    const ac = $('#gAc'); ac.innerHTML = '';
+    const last = samples.length ? samples[samples.length - 1] : m, cmd = clamp(last, -1, 1);
+    el('circle', {cx: 110, cy: 100, r: 3, fill: css('--muted')}, ac);
+    el('line', {x1: 110, y1: 100, x2: 110, y2: 30, stroke: css('--line'), 'stroke-width': 2, 'stroke-dasharray': '4 3'}, ac);
+    const ang = cmd * 45 * PI / 180;
+    el('line', {x1: 110, y1: 100, x2: 110 + 70 * Math.sin(ang), y2: 100 - 70 * Math.cos(ang), stroke: css('--blue'), 'stroke-width': 3.5, 'stroke-linecap': 'round'}, ac);
+    el('text', {x: 110, y: 117, 'text-anchor': 'middle', 'font-size': 12, fill: css('--muted')}, ac,
+       `${samples.length ? 'sampled' : 'mean'} a = ${last.toFixed(2)}  →  ${Math.abs(cmd * 45) < 0.5 ? 'straight' : Math.abs(cmd * 45).toFixed(0) + '° ' + (cmd > 0 ? 'right' : 'left')}`);
+  }
+  $('#gSample').onclick = () => { samples.push(+mu.value + +sg.value * gauss()); if (samples.length > 40) samples.shift(); draw(); };
+  $('#gClear').onclick = () => { samples = []; draw(); };
+  mu.oninput = sg.oninput = () => { samples = []; draw(); };
+  draw();
+})();
+
+/* ---------------------------------------------------------------- 6 tiles */
+(function(){
+  const svg = $('#tSvg'), S = 420, pad = 18, lowsHigh = [0, 1];
+  const bins = [6, 6];
+  let pt = [0.43, 0.52], dragging = false;
+  const cols = ['--blue', '--orange', '--green', '--purple', '--sky', '--red', '--grey', '--ink'];
+  let nGrids = 4;
+  tabs($('#tNTabs'), [1, 2, 4, 8].map(v => ({label: String(v), value: v})), nGrids, v => { nGrids = v; draw(); });
+  const px = v => pad + v * (S - 2 * pad);
+  function draw(){
+    const n = nGrids;
+    const tc = new TileCoder([0, 0], [1, 1], bins, [false, false], n);
+    svg.innerHTML = '';
+    el('rect', {x: pad, y: pad, width: S - 2 * pad, height: S - 2 * pad, fill: 'none', stroke: css('--line')}, svg);
+    for (let k = 0; k < n; k++){
+      const c = css(cols[k]), off = tc.offsets[k], w = tc.widths;
+      // grid lines (shifted)
+      for (let d = 0; d < 2; d++) for (let i = -1; i <= bins[d] + 1; i++){
+        const v = (i - off[d]) * w[d]; if (v < 0 || v > 1) continue;
+        if (d === 0) el('line', {x1: px(v), x2: px(v), y1: pad, y2: S - pad, stroke: c, 'stroke-opacity': .22}, svg);
+        else el('line', {y1: S - px(v), y2: S - px(v), x1: pad, x2: S - pad, stroke: c, 'stroke-opacity': .22}, svg);
+      }
+    }
+    for (let k = 0; k < n; k++){
+      const c = css(cols[k]), off = tc.offsets[k], w = tc.widths, cell = tc.cells(pt, k);
+      const lo = [(cell[0] - off[0]) * w[0], (cell[1] - off[1]) * w[1]];
+      const xa = clamp(lo[0], 0, 1), xb = clamp(lo[0] + w[0], 0, 1), ya = clamp(lo[1], 0, 1), yb = clamp(lo[1] + w[1], 0, 1);
+      el('rect', {x: px(xa), y: S - px(yb), width: px(xb) - px(xa), height: px(yb) - px(ya), fill: c, 'fill-opacity': .22, stroke: c, 'stroke-width': 1.6}, svg);
+    }
+    el('circle', {cx: px(pt[0]), cy: S - px(pt[1]), r: 7, fill: css('--ink'), stroke: css('--card'), 'stroke-width': 2}, svg);
+    el('text', {x: S / 2, y: S - 2, 'text-anchor': 'middle', 'font-size': 12, fill: css('--muted')}, svg, 'input 1 (e.g. distance to goal)');
+    const t = el('text', {x: 8, y: S / 2, 'text-anchor': 'middle', 'font-size': 12, fill: css('--muted'), transform: `rotate(-90 8 ${S / 2})`}, svg, 'input 2 (e.g. goal bearing)');
+    // info: overlap area = size of intersection of active tiles
+    let xlo = 0, xhi = 1, ylo = 0, yhi = 1;
+    for (let k = 0; k < n; k++){
+      const off = tc.offsets[k], w = tc.widths, cell = tc.cells(pt, k);
+      xlo = Math.max(xlo, (cell[0] - off[0]) * w[0]); xhi = Math.min(xhi, (cell[0] - off[0] + 1) * w[0]);
+      ylo = Math.max(ylo, (cell[1] - off[1]) * w[1]); yhi = Math.min(yhi, (cell[1] - off[1] + 1) * w[1]);
+    }
+    const one = tc.widths[0] * tc.widths[1], ov = Math.max(xhi - xlo, 0) * Math.max(yhi - ylo, 0);
+    $('#tInfo').innerHTML = `
+      <div><b>${n}</b> active feature${n > 1 ? 's' : ''} (one per grid), out of <b>${tc.size}</b> in total.</div>
+      <div style="margin-top:6px">The policy mean here is just a sum of those ${n} weights:<br><span class="mono">&mu;(s) = w<sub>${tc.indices(pt).slice(0, 3).join('</sub> + w<sub>')}</sub>${n > 3 ? ' + &hellip;' : ''}</span></div>
+      <div style="margin-top:8px">One tile is ${(one * 100).toFixed(1)}% of the space; the overlap of all active tiles is <b>${(ov * 100).toFixed(2)}%</b>.</div>`;
+  }
+  function pos(ev){ const r = svg.getBoundingClientRect(); const x = (ev.clientX - r.left) / r.width * S, y = (ev.clientY - r.top) / r.height * S; pt = [clamp((x - pad) / (S - 2 * pad), 0, .999), clamp((S - y - pad) / (S - 2 * pad), 0, .999)]; draw(); }
+  svg.addEventListener('pointerdown', e => { dragging = true; try { svg.setPointerCapture(e.pointerId); } catch (_) {} pos(e); });
+  svg.addEventListener('pointermove', e => { if (dragging) pos(e); });
+  svg.addEventListener('pointerup', () => dragging = false);
+  draw();
+})();
+
+/* ---------------------------------------------------------------- 7 update */
+(function(){
+  const svg = $('#uSvg'), x0 = 40, x1 = 540, top = 18, base = 230;
+  const xs = a => x0 + (a + 2) / 4 * (x1 - x0);
+  const MU = 0.0, SIG = 0.4, AMU = 0.3, ASG = 0.02;
+  const pdf = (a, m, s) => Math.exp(-.5 * ((a - m) / s) ** 2) / (s * Math.sqrt(2 * PI));
+  function draw(){
+    const a = +$('#uA').value, d = +$('#uD').value;
+    $('#uAV').textContent = a.toFixed(2); $('#uDV').textContent = (d > 0 ? '+' : '') + d.toFixed(2);
+    const z = (a - MU) / SIG;
+    const mu2 = MU + AMU * d * (a - MU);
+    const sg2 = Math.exp(Math.log(SIG) + ASG * d * (z * z - 1));
+    svg.innerHTML = '';
+    const ymax = Math.max(pdf(0, 0, Math.min(SIG, sg2)), 1) * 1.1, ys = v => base - v / ymax * (base - top);
+    const curve = (m, s, col, dash, w) => { let p = ''; for (let t = -2; t <= 2.0001; t += .02) p += (p ? 'L' : 'M') + xs(t).toFixed(1) + ',' + ys(pdf(t, m, s)).toFixed(1); el('path', {d: p, fill: 'none', stroke: css(col), 'stroke-width': w, 'stroke-dasharray': dash}, svg); };
+    curve(MU, SIG, '--muted', '5 4', 2);
+    curve(mu2, sg2, '--blue', '', 3);
+    el('line', {x1: x0, x2: x1, y1: base, y2: base, stroke: css('--grey')}, svg);
+    for (let t = -2; t <= 2; t++) el('text', {x: xs(t), y: base + 18, 'text-anchor': 'middle', 'font-size': 12, fill: css('--muted')}, svg, t > 0 ? '+' + t : String(t));
+    el('text', {x: (x0 + x1) / 2, y: base + 38, 'text-anchor': 'middle', 'font-size': 12.5, fill: css('--muted')}, svg, 'action a');
+    // the action tried
+    el('line', {x1: xs(a), x2: xs(a), y1: top + 10, y2: base, stroke: css('--orange'), 'stroke-width': 2}, svg);
+    el('circle', {cx: xs(a), cy: top + 10, r: 6, fill: css('--orange')}, svg);
+    el('text', {x: xs(a) + 10, y: top + 14, 'font-size': 12, fill: css('--orange'), 'font-weight': 700}, svg, 'action tried');
+    // legend
+    el('line', {x1: 60, x2: 90, y1: 288, y2: 288, stroke: css('--muted'), 'stroke-dasharray': '5 4', 'stroke-width': 2}, svg);
+    el('text', {x: 96, y: 292, 'font-size': 12, fill: css('--muted')}, svg, 'before');
+    el('line', {x1: 160, x2: 190, y1: 288, y2: 288, stroke: css('--blue'), 'stroke-width': 3}, svg);
+    el('text', {x: 196, y: 292, 'font-size': 12, fill: css('--muted')}, svg, 'after the update');
+    const dm = mu2 - MU, ds = sg2 - SIG;
+    const towards = d > 0 ? 'toward' : d < 0 ? 'away from' : 'neither toward nor away from';
+    $('#uInfo').innerHTML = `
+      <div>&mu;: <span class="mono">${MU.toFixed(2)} &rarr; ${mu2.toFixed(3)}</span> <span style="color:var(--muted)">(${dm >= 0 ? '+' : ''}${dm.toFixed(3)})</span></div>
+      <div>&sigma;: <span class="mono">${SIG.toFixed(2)} &rarr; ${sg2.toFixed(3)}</span> <span style="color:var(--muted)">(${ds >= 0 ? '+' : ''}${ds.toFixed(3)})</span></div>
+      <div style="margin-top:8px;color:var(--muted)">${d === 0 ? 'No surprise, no change.' : `The mean moves <b style="color:var(--fg)">${towards}</b> the tried action. ${(z * z > 1) === (d > 0) ? 'The bell widens.' : 'The bell narrows.'}`}</div>`;
+  }
+  $('#uA').oninput = $('#uD').oninput = draw; draw();
+})();
+
+/* ---------------------------------------------------------------- 8 reward */
+(function(){
+  const E = $('#rE'), D = $('#rDet'), I = $('#rIn');
+  function draw(){
+    const e = +E.value, det = +D.value, inn = +I.value;
+    $('#rEV').textContent = e.toFixed(1); $('#rDetV').textContent = det + ' s'; $('#rInV').textContent = inn + ' s';
+    // seconds-equivalent: lam = 1 s per second in violation, event penalty E * 100 s
+    const detour = det, clip = inn * 1 + e * 100;
+    const max = Math.max(detour, clip, 1);
+    const win = clip < detour ? 'clip' : 'detour';
+    const row = (label, v, col, on) => `<div style="margin:8px 0"><div style="display:flex;justify-content:space-between;font-size:14px"><span>${label}</span><span class="mono">&minus;${v.toFixed(0)} s-equiv ${on ? '&nbsp;&#10003; cheaper' : ''}</span></div><div class="bar" style="margin-top:4px"><i style="left:0;width:${v / max * 100}%;background:${col}"></i></div></div>`;
+    $('#rOut').innerHTML = row('Fly around (extra time)', detour, 'var(--green)', win === 'detour') +
+      row('Clip the corner (time inside + event penalty)', clip, 'var(--red)', win === 'clip') +
+      `<div class="callout ${win === 'clip' ? '' : 'blue'}" style="margin-top:8px">${win === 'clip' ? '<b>The agent would clip the corner.</b> The penalty is cheaper than the detour.' : '<b>The agent would fly around.</b> The penalty outweighs the detour.'}</div>`;
+  }
+  E.oninput = D.oninput = I.oninput = draw; draw();
+})();
+
+/* ---------------------------------------------------------------- 9 probe */
+(function(){
+  const svg = $('#prSvg');
+  let stage = 3;
+  const W = {};
+  [1, 2, 3].forEach(s => { const w = DATA.weights[s]; W[s] = {feat: makeFeatures(s, w.cpa), mu: w.mu, sigma: w.sigma}; });
+  const scene = {goal: [4, 38], obstacle: {x: 7, y: 17, r: 6}, intruder: {x: 26, y: 24, hdg: 270, speed: 150}};
+  let drag = null;
+  tabs($('#prStage'), [{label: 'Stage 1: goal', value: 1}, {label: 'Stage 2: + obstacle', value: 2}, {label: 'Stage 3: + intruder', value: 3}], stage, v => { stage = v; draw(); });
+  const R = $('#prR'), H = $('#prH');
+  R.oninput = () => { scene.obstacle.r = +R.value; draw(); };
+  H.oninput = () => { scene.intruder.hdg = +H.value; draw(); };
+  function draw(){
+    $('#prRV').textContent = scene.obstacle.r + ' NM'; $('#prHV').textContent = scene.intruder.hdg + '°';
+    R.disabled = stage < 2; H.disabled = stage < 3;
+    const sc = {goal: scene.goal, obstacle: stage >= 2 ? scene.obstacle : null, intruder: stage >= 3 ? scene.intruder : null};
+    const st = stateFromScene(sc), w = W[stage];
+    const p = policyAt(w.feat, w.mu, w.sigma, st);
+    svg.innerHTML = '';
+    const Y = v => -v;
+    // range rings
+    [10, 20, 30, 40].forEach(r => { el('circle', {cx: 0, cy: 0, r, fill: 'none', stroke: css('--line'), 'stroke-width': .25}, svg); el('text', {x: 0.8, y: -r + 1.8, 'font-size': 2.2, fill: css('--muted')}, svg, r + ' NM'); });
+    el('line', {x1: 0, y1: 0, x2: 0, y2: -50, stroke: css('--line'), 'stroke-width': .3, 'stroke-dasharray': '1 1'}, svg);
+    // obstacle
+    if (sc.obstacle){
+      const o = sc.obstacle;
+      el('circle', {cx: o.x, cy: Y(o.y), r: o.r, fill: css('--grey'), opacity: .7}, svg);
+      el('circle', {cx: o.x, cy: Y(o.y), r: 1.4, fill: css('--card'), stroke: css('--ink'), 'stroke-width': .4, 'data-drag': 'obstacle', style: 'cursor:grab'}, svg);
+      el('circle', {cx: o.x, cy: Y(o.y), r: Math.max(o.r, 3), fill: 'transparent', 'data-drag': 'obstacle', style: 'cursor:grab'}, svg);
+    }
+    // goal
+    el('circle', {cx: scene.goal[0], cy: Y(scene.goal[1]), r: 5 / NM, fill: css('--green')}, svg);
+    el('circle', {cx: scene.goal[0], cy: Y(scene.goal[1]), r: 3.2, fill: 'transparent', stroke: css('--green'), 'stroke-width': .4, 'data-drag': 'goal', style: 'cursor:grab'}, svg);
+    el('text', {x: scene.goal[0] + 4, y: Y(scene.goal[1]) + 1, 'font-size': 2.6, fill: css('--green'), 'font-weight': 700}, svg, 'goal');
+    // intruder + predicted closest approach
+    if (sc.intruder){
+      const it = sc.intruder, c = css('--orange');
+      const h = it.hdg * PI / 180, vx = Math.sin(h), vy = Math.cos(h);
+      el('line', {x1: it.x, y1: Y(it.y), x2: it.x + vx * 14, y2: Y(it.y + vy * 14), stroke: c, 'stroke-width': .5, 'stroke-dasharray': '1.2 1'}, svg);
+      el('circle', {cx: it.x, cy: Y(it.y), r: 5, fill: 'none', stroke: c, 'stroke-width': .3, 'stroke-dasharray': '1 .8'}, svg);
+      const g = el('g', {transform: `translate(${it.x} ${Y(it.y)}) rotate(${it.hdg})`, 'data-drag': 'intruder', style: 'cursor:grab'}, svg);
+      el('path', {d: 'M0,-3.2 L2.3,2.8 L0,1.5 L-2.3,2.8 Z', fill: c, stroke: css('--card'), 'stroke-width': .3}, g);
+      el('circle', {cx: 0, cy: 0, r: 4, fill: 'transparent'}, g);
+      const s = st.intruder, tcpa = s[3];
+      if (tcpa > 0){
+        const oy = OWN_SPEED * tcpa / 1852;                                   // own position at tcpa (NM ahead)
+        const ix = it.x + it.speed * Math.sin(h) * tcpa / 1852, iy = it.y + it.speed * Math.cos(h) * tcpa / 1852;
+        el('line', {x1: 0, y1: Y(oy), x2: ix, y2: Y(iy), stroke: Math.abs(s[4]) < 5 ? css('--red') : css('--muted'), 'stroke-width': .35}, svg);
+        el('circle', {cx: 0, cy: Y(oy), r: .8, fill: css('--blue')}, svg);
+        el('circle', {cx: ix, cy: Y(iy), r: .8, fill: c}, svg);
+      }
+    }
+    // policy arrow + sigma wedge
+    const cmd = clamp(p.mu, -1, 1), lo = clamp(p.mu - p.sigma, -1, 1), hi = clamp(p.mu + p.sigma, -1, 1);
+    const L = 20, pt = a => [L * Math.sin(a * 45 * PI / 180), -L * Math.cos(a * 45 * PI / 180)];
+    const a1 = pt(lo), a2 = pt(hi);
+    el('path', {d: `M0,0 L${a1[0]},${a1[1]} A${L},${L} 0 0 1 ${a2[0]},${a2[1]} Z`, fill: css('--blue'), opacity: .16}, svg);
+    const ap = pt(cmd);
+    el('line', {x1: 0, y1: 0, x2: ap[0], y2: ap[1], stroke: css('--blue'), 'stroke-width': 1.1, 'stroke-linecap': 'round'}, svg);
+    const hd = el('g', {transform: `translate(${ap[0]} ${ap[1]}) rotate(${cmd * 45})`}, svg); el('path', {d: 'M0,-2.4 L2,1 L-2,1 Z', fill: css('--blue')}, hd);
+    // aircraft
+    const ga = el('g', {}, svg); planeIcon(ga, css('--ink'), .8);
+    // outputs
+    $('#prBar').style.cssText = `left:${cmd >= 0 ? 50 : 50 + cmd * 50}%;width:${Math.abs(cmd) * 50}%;background:var(--blue)`;
+    const f = (x, d = 1) => x.toFixed(d);
+    const rows = [['goal bearing', f(st.goalBearing * 180 / PI, 0) + '°'], ['goal distance', f(st.distGoalKm, 0) + ' km']];
+    if (st.obstacle) rows.push(['obstacle clearance', f(st.obstacle[0]) + ' NM'], ['obstacle bearing', f(st.obstacle[1] * 180 / PI, 0) + '°']);
+    if (st.intruder) rows.push(['intruder distance', f(st.intruder[0]) + ' NM'], ['time to closest approach', f(st.intruder[3], 0) + ' s'], ['predicted miss distance', f(st.intruder[4]) + ' NM' + (Math.abs(st.intruder[4]) < 5 ? ' ⚠' : '')]);
+    $('#prOut').innerHTML = `
+      <div style="display:flex;gap:18px;flex-wrap:wrap">
+        <div><div class="sub" style="font-size:12.5px;margin:0">mean &mu;</div><b style="font-size:26px">${p.mu >= 0 ? '+' : ''}${f(p.mu, 2)}</b></div>
+        <div><div class="sub" style="font-size:12.5px;margin:0">width &sigma;</div><b style="font-size:26px">${f(p.sigma, 2)}</b></div>
+        <div><div class="sub" style="font-size:12.5px;margin:0">heading change</div><b style="font-size:26px">${f(Math.abs(cmd) * 45, 0)}&deg; ${cmd > .01 ? 'right' : cmd < -.01 ? 'left' : ''}</b></div>
+      </div>
+      <table style="font-size:13.5px;margin-top:12px">${rows.map(r => `<tr><td style="padding:4px 8px 4px 0;color:var(--muted)">${r[0]}</td><td class="mono" style="padding:4px 0">${r[1]}</td></tr>`).join('')}</table>
+      <div class="sub" style="font-size:12.5px;margin-top:6px">${p.idx.length} active tiles of ${w.feat.size}. μ beyond ±1 is clipped by the environment.</div>`;
+  }
+  function toScene(ev){ const r = svg.getBoundingClientRect(); const vb = svg.viewBox.baseVal; return [vb.x + (ev.clientX - r.left) / r.width * vb.width, -(vb.y + (ev.clientY - r.top) / r.height * vb.height)]; }
+  svg.addEventListener('pointerdown', e => { const t = e.target.closest('[data-drag]'); if (!t) return; drag = t.getAttribute('data-drag'); try { svg.setPointerCapture(e.pointerId); } catch (_) {} });
+  svg.addEventListener('pointermove', e => {
+    if (!drag) return; const [x, y] = toScene(e), cx = clamp(x, -44, 44), cy = clamp(y, -30, 52);
+    if (drag === 'goal') scene.goal = [cx, Math.max(cy, 3)]; else if (drag === 'obstacle'){ scene.obstacle.x = cx; scene.obstacle.y = cy; } else { scene.intruder.x = cx; scene.intruder.y = cy; }
+    draw();
+  });
+  svg.addEventListener('pointerup', () => drag = null);
+  draw();
+})();
+
+function niceTicks(lo, hi, n){
+  const span = (hi - lo) || 1, raw = span / n, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const step = [1, 2, 2.5, 5, 10].map(k => k * mag).find(v => v >= raw);
+  const out = []; for (let v = Math.floor(lo / step + 1e-9) * step; v <= Math.ceil(hi / step - 1e-9) * step + step * 1e-6; v += step) out.push(+v.toFixed(10));
+  return out;
+}
+/* ---------------------------------------------------------------- 10 charts */
+(function(){
+  const colors = ['--grey', '--sky', '--blue', '--orange', '--green', '--purple'];
+  const dashes = ['', '', '', '', '', '6 4'];
+  const metrics = {
+    mean_time: {label: 'flight time (s)', mult: 1, fmt: v => v.toFixed(0) + ' s'},
+    restricted: {label: 'restricted-area entries (%)', mult: 100, fmt: v => v.toFixed(0) + '%'},
+    intrusion: {label: 'loss of separation (%)', mult: 100, fmt: v => v.toFixed(0) + '%'},
+    sigma: {label: 'policy σ', mult: 1, fmt: v => v.toFixed(2)},
+  };
+  let metric = 'intrusion';
+  const on = DATA.histories.map(() => true);
+  const svg = $('#lcSvg'), tip = $('#lcTip');
+  tabs($('#lcMetric'), Object.keys(metrics).map(k => ({label: metrics[k].label, value: k})), metric, v => { metric = v; draw(); });
+  const tg = $('#lcToggles');
+  DATA.histories.forEach((h, i) => {
+    const l = document.createElement('label'); l.className = 'ctl'; l.style.fontSize = '13px';
+    l.innerHTML = `<input type="checkbox" checked><i style="display:inline-block;width:14px;height:3px;border-radius:2px;background:var(${colors[i]})"></i>${h.label}`;
+    l.querySelector('input').onchange = e => { on[i] = e.target.checked; draw(); };
+    tg.appendChild(l);
+  });
+  const W = 860, H = 340, L = 56, R = 14, T = 14, B = 40;
+  function draw(){
+    const m = metrics[metric];
+    svg.innerHTML = '';
+    const all = []; DATA.histories.forEach((h, i) => { if (on[i]) h.points.forEach(p => all.push([p.episode, p[metric] * m.mult])); });
+    if (!all.length) return;
+    const xmax = Math.max(...all.map(a => a[0])), ymin0 = Math.min(...all.map(a => a[1])), ymax0 = Math.max(...all.map(a => a[1]));
+    const lo0 = metric === 'mean_time' || metric === 'sigma' ? ymin0 - (ymax0 - ymin0) * .08 : 0;
+    const ticks = niceTicks(lo0, ymax0 + (ymax0 - lo0) * .06 + 1e-9, 5);
+    const ylo = ticks[0], yhi = ticks[ticks.length - 1];
+    const xs = v => L + v / xmax * (W - L - R), ys = v => H - B - (v - ylo) / (yhi - ylo) * (H - B - T);
+    ticks.forEach(v => {
+      el('line', {x1: L, x2: W - R, y1: ys(v), y2: ys(v), stroke: css('--line')}, svg);
+      el('text', {x: L - 8, y: ys(v) + 4, 'text-anchor': 'end', 'font-size': 12, fill: css('--muted')}, svg, m.fmt(v));
+    });
+    for (let x = 0; x <= xmax; x += 500) el('text', {x: xs(x), y: H - B + 18, 'text-anchor': 'middle', 'font-size': 12, fill: css('--muted')}, svg, x);
+    el('text', {x: (L + W - R) / 2, y: H - 6, 'text-anchor': 'middle', 'font-size': 12.5, fill: css('--muted')}, svg, 'training episodes');
+    DATA.histories.forEach((h, i) => {
+      if (!on[i]) return;
+      const d = h.points.map((p, j) => (j ? 'L' : 'M') + xs(p.episode).toFixed(1) + ',' + ys(p[metric] * m.mult).toFixed(1)).join('');
+      el('path', {d, fill: 'none', stroke: css(colors[i]), 'stroke-width': 2.4, 'stroke-dasharray': dashes[i], 'stroke-linejoin': 'round'}, svg);
+    });
+    const hover = el('line', {y1: T, y2: H - B, stroke: css('--muted'), 'stroke-width': 1, opacity: 0}, svg);
+    const hit = el('rect', {x: L, y: T, width: W - L - R, height: H - B - T, fill: 'transparent'}, svg);
+    hit.addEventListener('pointermove', ev => {
+      const r = svg.getBoundingClientRect(), x = (ev.clientX - r.left) / r.width * W, ep = (x - L) / (W - L - R) * xmax;
+      let lines = [], best = null;
+      DATA.histories.forEach((h, i) => { if (!on[i]) return; const p = h.points.reduce((a, b) => Math.abs(b.episode - ep) < Math.abs(a.episode - ep) ? b : a); if (Math.abs(p.episode - ep) < xmax / 12){ lines.push(`<span style="color:var(${colors[i]})">&#9632;</span> ${h.label}: <b>${m.fmt(p[metric] * m.mult)}</b> <span style="color:var(--muted)">@${p.episode}</span>`); best = p.episode; } });
+      if (!lines.length){ tip.style.display = 'none'; hover.setAttribute('opacity', 0); return; }
+      hover.setAttribute('x1', xs(best)); hover.setAttribute('x2', xs(best)); hover.setAttribute('opacity', .5);
+      tip.innerHTML = lines.join('<br>'); tip.style.display = 'block';
+      const tx = (xs(best) / W) * r.width + 12; tip.style.left = Math.min(tx, r.width - tip.offsetWidth - 4) + 'px'; tip.style.top = '8px';
+    });
+    hit.addEventListener('pointerleave', () => { tip.style.display = 'none'; hover.setAttribute('opacity', 0); });
+  }
+  draw();
+})();
+
+(function(){
+  const svg = $('#evSvg'), cats = [['restricted entry', 'entered a restricted area'], ['intrusion', 'lost separation (< 5 NM)'], ['sector exit', 'left the sector']];
+  const colors = ['--blue', '--orange', '--green', '--purple'];
+  const W = 860, H = 330, L = 50, R = 14, T = 16, B = 46, ymax = 24;
+  const ys = v => H - B - v / ymax * (H - B - T);
+  for (let v = 0; v <= 20; v += 5){ el('line', {x1: L, x2: W - R, y1: ys(v), y2: ys(v), stroke: css('--line')}, svg); el('text', {x: L - 8, y: ys(v) + 4, 'text-anchor': 'end', 'font-size': 12, fill: css('--muted')}, svg, v + '%'); }
+  const gw = (W - L - R) / cats.length, bw = gw / (DATA.evals.length + 1.6);
+  cats.forEach(([key, label], ci) => {
+    const gx = L + ci * gw;
+    DATA.evals.forEach((e, ei) => {
+      const [v, lo, hi] = e[key], x = gx + bw * 0.8 + ei * bw;
+      el('rect', {x, y: ys(v), width: bw * .86, height: Math.max(H - B - ys(v), 1), fill: css(colors[ei]), rx: 3}, svg);
+      const cx = x + bw * .43;
+      el('line', {x1: cx, x2: cx, y1: ys(lo), y2: ys(hi), stroke: css('--ink'), 'stroke-width': 1.3}, svg);
+      el('line', {x1: cx - 4, x2: cx + 4, y1: ys(lo), y2: ys(lo), stroke: css('--ink')}, svg);
+      el('line', {x1: cx - 4, x2: cx + 4, y1: ys(hi), y2: ys(hi), stroke: css('--ink')}, svg);
+      el('text', {x: cx + 8, y: ys(v) - 5, 'font-size': 12, 'font-weight': 600, fill: css('--fg'), 'text-anchor': 'start'}, svg, v + '%');
+    });
+    el('text', {x: gx + gw / 2, y: H - 16, 'text-anchor': 'middle', 'font-size': 13, fill: css('--muted')}, svg, label);
+  });
+  $('#evLegend').innerHTML = DATA.evals.map((e, i) => `<span><i style="background:var(${colors[i]})"></i>${e.label}</span>`).join('');
+})();
+
+/* ---------------------------------------------------------------- 11 dubins */
+(function(){
+  const d = $('#dubSvg'), s = 300, u = v => v / 10 * (s - 20) + 10;
+  el('rect', {x: 10, y: 10, width: s - 20, height: s - 20, fill: 'none', stroke: css('--ink'), 'stroke-width': 1.4}, d);
+  [[5, 5, 1.2], [2.5, 7, .8], [7, 3, .9], [8, 7, .8]].forEach(o => el('circle', {cx: u(o[0]), cy: s - u(o[1]), r: o[2] / 10 * (s - 20), fill: css('--grey'), opacity: .75}, d));
+  el('circle', {cx: u(9), cy: s - u(9), r: .5 / 10 * (s - 20), fill: css('--green')}, d);
+  el('circle', {cx: u(1), cy: s - u(1), r: 5, fill: css('--blue')}, d);
+  el('text', {x: u(1) + 9, y: s - u(1) + 4, 'font-size': 11, fill: css('--muted')}, d, 'start');
+  el('text', {x: u(9) - 8, y: s - u(9) + 22, 'font-size': 11, fill: css('--muted'), 'text-anchor': 'end'}, d, 'goal');
+  const c = $('#cmpSvg'); drawGeometry(c, DATA.scenarios[3].random);
+  c.setAttribute('width', 300);
+})();
+</script>
+</body>
+</html>

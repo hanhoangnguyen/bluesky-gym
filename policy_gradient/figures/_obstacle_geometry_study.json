@@ -1,0 +1,31 @@
+{
+ "n_scenarios": 300,
+ "circle_to_polygon_area_ratio": {
+  "mean": 13.302114831819257,
+  "median": 4.490200793489101,
+  "p90": 16.039005573244616,
+  "max": 2541.1597259406403
+ },
+ "straight_line_hits_polygon": 0.5933333333333334,
+ "straight_line_hits_circle": 0.8933333333333333,
+ "mean_obstacles_on_line_polygon": 0.83,
+ "mean_obstacles_on_line_circle": 1.76,
+ "detour_ratio_polygon": {
+  "mean": 1.1004256920248725,
+  "median": 1.0125599714639222,
+  "p90": 1.317465752565545,
+  "max": 2.6826571536169297
+ },
+ "detour_ratio_circle": {
+  "mean": 1.1793402407775364,
+  "median": 1.0311300226665603,
+  "p90": 1.677613879708038,
+  "max": 3.45903249675881
+ },
+ "detour_over_5pct_polygon": 0.36,
+ "detour_over_5pct_circle": 0.79,
+ "unreachable_polygon": 0.0033333333333333335,
+ "unreachable_circle": 0.6466666666666666,
+ "start_or_goal_inside_circle": 0.6466666666666666,
+ "start_or_goal_inside_polygon": 0.0033333333333333335
+}
